@@ -26,13 +26,20 @@ no accounts. It only reads SMS from `MPESA`, and it never sends, deletes or chan
 - **Inbox import**: reads `MPESA` / `M-PESA` messages. It re-scans incrementally every time you open the app, and
   re-imports are idempotent: a transaction is stored once per `(code, kind)`.
 - **Live updates**: new M-Pesa SMS are added as they arrive.
-- **Parser**: received, sent, pay bill, buy goods, withdrawal, deposit, airtime, M-Shwari, Fuliza loan and Fuliza repayment.
+- **Parser**: received, sent (including Pochi la Biashara), pay bill, buy goods, withdrawal, deposit, airtime,
+  M-Shwari and KCB M-PESA savings in and out, Fuliza loan and Fuliza repayment. Reversals and M-Shwari loans are
+  deliberately left unrecognised until a real example shows their exact wording.
   Messages with a transaction code but an unknown wording go to *Unrecognised messages*; the parser never guesses.
 - **Dashboard**: In / Out / Fees (and % of out) / Net / Fuliza borrowed and repaid / Saved, spending by category,
   top 5 recipients, and income vs spending over 12 months. Tap a category to see its transactions.
 - **Categories**: editable keyword rules (yours win over the built-ins, longer keywords win), per-transaction
   overrides that survive "Recategorize all", and "Always categorize *NAME* as …".
 - **Budgets**: monthly limit per category, with one notification at 80% and one at 100% per month.
+- **Fuliza tracker**: how much you owe and when it's due (read from Safaricom's own loan SMS), your Fuliza limit,
+  access fees this month and this year, and the full loan/repayment history.
+- **Bills**: payments to the same place in at least 3 of the last 6 months (usually once or twice a month) become
+  bills with their usual day and amount, marked paid / due soon / overdue, with a reminder 2 days before.
+  "Not a bill" hides a false match.
 - **Export**: CSV of all transactions and JSON of your rules, through the system file picker. Rules can be imported too.
 - **Import from file**: `.txt` (one message per blank-line-separated block) or `termux-sms-list` JSON, for when SMS
   access isn't available.

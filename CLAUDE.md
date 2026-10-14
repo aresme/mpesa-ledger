@@ -51,6 +51,8 @@ JetBrains Mono only for amounts/codes where tabular alignment helps. No `>` prom
 ## Layout (`app/src/main/java/com/ares/mpesaledger/`)
 - `parser/` — pure Kotlin, **zero Android imports**. Port of `mpesa_ledger.py` (kept at repo root as the reference); spec §5.
   - `MpesaParser.kt`: all regexes + the ordered `patterns` list. `Model.kt`: `Kind`, `Direction`, `ParsedTransaction`, `ParseResult`. `SmsText.kt`: blank-line splitter.
+  - Parser v3 (2026-10-14): M-Shwari/KCB savings in/out added from documented wording (not yet seen on the phone).
+    Reversals and M-Shwari loans intentionally unparsed until a real masked example exists.
   - New SMS format = new `Kind` (if needed) + pattern at the right priority + a test in `EdgeCaseTest` with a masked/synthetic message. Never guess unknown formats: they go to Unparsed.
 - `data/` — Room entities, DAOs, migrations (schemas exported to `app/schemas/`), repository.
 - `sms/` — inbox reader + `InboxSync` (source of truth, runs on every resume), `SmsReceiver` (live, BROADCAST_SMS-guarded),
@@ -59,6 +61,9 @@ JetBrains Mono only for amounts/codes where tabular alignment helps. No `>` prom
 - Debug receiver `debug/DebugSmsReceiver` is guarded by `android.permission.DUMP` (adb shell has it; apps don't).
 - Kill the app for a cold-start test with `adb shell run-as com.ares.mpesaledger kill -9 <pid>`; `am force-stop` puts it in
   the stopped state where no broadcast is delivered (that's also what XOS does, hence the inbox catch-up).
+- `domain/` — `FulizaTracker` (+ `parser/FulizaDetails`, read from raw SMS, no schema), `BillDetector` (pure: ≥3 of last 6
+  months, ≤2 payments/month median), `BillReminder` (daily inexact alarm ~09:00 via `notify/BillReminderScheduler`, re-armed on
+  boot, plus after every sync/live SMS; one reminder per bill per due date; hidden/notified keys in AppPrefs).
 - `domain/` — `Categorizer` + `DefaultRules`, `MonthTotals`, `BudgetRules` (pure, unit-tested) and `BudgetChecker`
   (Android: reads Room, posts notifications). SQL must stay compatible with API 24's SQLite 3.9 (no UPSERT, no window functions).
 - `ui/` — `theme/` (tokens, Inter + tabular `Num` styles, `Mono` for codes/raw SMS), `components/` (cards, top bar with
