@@ -57,7 +57,75 @@ interface TransactionDao {
 
     @Query("SELECT COUNT(*) FROM transactions")
     suspend fun count(): Int
+
+    /** Spending (direction out, amounts only) per effective category, largest first. */
+    @Query(
+        """SELECT COALESCE(categoryOverride, category) AS category, SUM(amountCents) AS totalCents, COUNT(*) AS count
+           FROM transactions WHERE direction = 'out' AND timestamp >= :start AND timestamp < :end
+           GROUP BY 1 ORDER BY totalCents DESC"""
+    )
+    fun observeCategorySpending(start: Long, end: Long): Flow<List<CategoryTotal>>
+
+    @Query(
+        """SELECT counterparty, SUM(amountCents) AS totalCents, COUNT(*) AS count
+           FROM transactions WHERE direction = 'out' AND timestamp >= :start AND timestamp < :end
+           GROUP BY counterparty ORDER BY totalCents DESC LIMIT :limit"""
+    )
+    fun observeTopRecipients(start: Long, end: Long, limit: Int): Flow<List<RecipientTotal>>
+
+    /**
+     * The Activity list. Every filter is optional (null = no filter). [query] must already be
+     * LIKE-escaped with backslash. Undated rows sort last.
+     */
+    @Query(
+        """SELECT code, kind, direction, amountCents, feeCents, counterparty, account, timestamp,
+                  COALESCE(categoryOverride, category) AS category
+           FROM transactions
+           WHERE (:start IS NULL OR timestamp >= :start) AND (:end IS NULL OR timestamp < :end)
+             AND (:kind IS NULL OR kind = :kind)
+             AND (:category IS NULL OR COALESCE(categoryOverride, category) = :category)
+             AND (:query IS NULL OR counterparty LIKE '%' || :query || '%' ESCAPE '\'
+                  OR account LIKE '%' || :query || '%' ESCAPE '\' OR code LIKE '%' || :query || '%' ESCAPE '\')
+           ORDER BY timestamp DESC, code DESC"""
+    )
+    fun observeList(start: Long?, end: Long?, kind: String?, category: String?, query: String?): Flow<List<TxListItem>>
+
+    @Query("SELECT * FROM transactions WHERE code = :code AND kind = :kind")
+    fun observe(code: String, kind: String): Flow<TransactionEntity?>
+
+    @Query("SELECT DISTINCT COALESCE(categoryOverride, category) FROM transactions ORDER BY 1")
+    fun observeUsedCategories(): Flow<List<String>>
+
+    /** Manual override; null clears it. Never touched by recategorize. */
+    @Query("UPDATE transactions SET categoryOverride = :category WHERE code = :code AND kind = :kind")
+    suspend fun setOverride(code: String, kind: String, category: String?)
+
+    @Query("SELECT code, kind, counterparty, account FROM transactions")
+    suspend fun categorizeKeys(): List<CategorizeKey>
+
+    /** Rule-derived category only; categoryOverride is left alone. */
+    @Query("UPDATE transactions SET category = :category WHERE code = :code AND kind = :kind AND category != :category")
+    suspend fun setRuleCategory(code: String, kind: String, category: String): Int
 }
+
+data class CategoryTotal(val category: String, val totalCents: Long, val count: Int)
+
+data class RecipientTotal(val counterparty: String, val totalCents: Long, val count: Int)
+
+data class CategorizeKey(val code: String, val kind: String, val counterparty: String, val account: String?)
+
+/** Lightweight list row (no raw SMS). [category] is the effective category. */
+data class TxListItem(
+    val code: String,
+    val kind: String,
+    val direction: String,
+    val amountCents: Long,
+    val feeCents: Long?,
+    val counterparty: String,
+    val account: String?,
+    val timestamp: Long?,
+    val category: String,
+)
 
 @Dao
 interface UnparsedDao {
@@ -79,6 +147,13 @@ interface UnparsedDao {
 interface RuleDao {
     @Query("SELECT * FROM category_rules")
     suspend fun getAll(): List<CategoryRuleEntity>
+
+    @Query("SELECT * FROM category_rules ORDER BY isUser DESC, keyword")
+    fun observeAll(): Flow<List<CategoryRuleEntity>>
+
+    /** Same keyword + isUser replaces the old rule (unique index). */
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun upsert(rule: CategoryRuleEntity): Long
 }
 
 @Dao
