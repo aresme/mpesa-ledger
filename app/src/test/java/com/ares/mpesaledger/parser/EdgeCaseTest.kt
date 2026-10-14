@@ -77,6 +77,11 @@ class EdgeCaseTest {
         assertEquals("BOLT", tx.counterparty)
     }
 
+    @Test fun `whitespace collapsing matches python split-join`() {
+        assertEquals("a b c", MpesaParser.collapseWhitespace("  a\n\n b\t\u00A0c \u202F "))
+        assertEquals("", MpesaParser.collapseWhitespace(" \n "))
+    }
+
     @Test fun `code-bearing unknown format lands in unparsed`() {
         val body = "QAB1234573 Confirmed. Reversal of transaction XYZ0000000 has been successfully reversed " +
             "on 1/1/26 at 1:00 PM and Ksh100.00 is credited to your M-PESA account."
