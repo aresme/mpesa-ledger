@@ -105,6 +105,10 @@ interface TransactionDao {
     @Query("SELECT * FROM transactions WHERE code = :code AND kind = :kind")
     fun observe(code: String, kind: String): Flow<TransactionEntity?>
 
+    /** Fuliza loans and repayments only (a handful of rows), for the Fuliza tracker. */
+    @Query("SELECT * FROM transactions WHERE kind IN ('fuliza', 'fuliza_repay')")
+    fun observeFuliza(): Flow<List<TransactionEntity>>
+
     @Query("SELECT DISTINCT COALESCE(categoryOverride, category) FROM transactions ORDER BY 1")
     fun observeUsedCategories(): Flow<List<String>>
 

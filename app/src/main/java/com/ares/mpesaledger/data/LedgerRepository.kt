@@ -10,6 +10,11 @@ import com.ares.mpesaledger.parser.Kind
 import com.ares.mpesaledger.parser.MpesaParser
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.map
+import com.ares.mpesaledger.domain.FulizaEvent
+import com.ares.mpesaledger.domain.FulizaSummary
+import com.ares.mpesaledger.domain.FulizaTracker
+import com.ares.mpesaledger.parser.FulizaDetails
 import java.time.Instant
 import java.time.YearMonth
 
@@ -58,6 +63,12 @@ class LedgerRepository(private val db: AppDatabase) {
     fun observeTransaction(code: String, kind: String): Flow<TransactionEntity?> = tx.observe(code, kind)
 
     fun observeUnparsed(): Flow<List<UnparsedEntity>> = db.unparsed().observeAll()
+
+    fun observeFuliza(): Flow<FulizaSummary> = tx.observeFuliza().map { rows ->
+        FulizaTracker.summarize(rows.map {
+            FulizaEvent(it.code, it.kind == Kind.FULIZA.key, it.amountCents, it.feeCents ?: 0, it.timestamp, FulizaDetails.parse(it.raw))
+        })
+    }
 
     /** Every category a picker should offer: in use, from rules, and the kind fallbacks. */
     fun observeCategoryChoices(): Flow<List<String>> =

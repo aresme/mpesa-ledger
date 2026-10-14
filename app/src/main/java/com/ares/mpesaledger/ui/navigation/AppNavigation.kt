@@ -31,6 +31,7 @@ import com.ares.mpesaledger.ui.dashboard.DashboardScreen
 import com.ares.mpesaledger.ui.detail.DetailScreen
 import com.ares.mpesaledger.ui.detail.DetailViewModel
 import com.ares.mpesaledger.ui.onboarding.OnboardingScreen
+import com.ares.mpesaledger.ui.fuliza.FulizaScreen
 import com.ares.mpesaledger.ui.rules.RulesScreen
 import com.ares.mpesaledger.ui.settings.SettingsScreen
 import com.ares.mpesaledger.ui.theme.AresBlack
@@ -51,6 +52,8 @@ object Routes {
     const val SETTINGS = "settings"
     const val UNPARSED = "unparsed"
     const val RULES = "rules"
+    const val FULIZA = "fuliza"
+    const val BILLS = "bills"
     private const val DETAIL = "detail"
 
     const val ACTIVITY_PATTERN =
@@ -101,6 +104,8 @@ fun AppNavigation(
                 DashboardScreen(
                     onOpenCategory = { category, month -> nav.navigate(Routes.activity(category, month)) },
                     onOpenActivity = { nav.navigateTab(Routes.ACTIVITY_PATTERN) },
+                    onOpenFuliza = { nav.navigate(Routes.FULIZA) },
+                    onOpenBills = { nav.navigate(Routes.BILLS) },
                 )
             }
             composable(
@@ -130,6 +135,7 @@ fun AppNavigation(
             ) { DetailScreen(onBack = { nav.popBackStack() }) }
             composable(Routes.UNPARSED) { UnparsedScreen(onBack = { nav.popBackStack() }) }
             composable(Routes.RULES) { RulesScreen(onBack = { nav.popBackStack() }) }
+            composable(Routes.FULIZA) { FulizaScreen(onBack = { nav.popBackStack() }) }
         }
     }
 }

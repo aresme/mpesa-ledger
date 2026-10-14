@@ -33,7 +33,11 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.LifecycleResumeEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.ares.mpesaledger.data.RecipientTotal
+import com.ares.mpesaledger.domain.FulizaSummary
 import com.ares.mpesaledger.domain.MonthTotals
+import com.ares.mpesaledger.ui.fuliza.dueText
+import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
+import androidx.compose.material3.Icon
 import com.ares.mpesaledger.ui.appViewModel
 import com.ares.mpesaledger.ui.components.AppCard
 import com.ares.mpesaledger.ui.components.AppIcons
@@ -59,6 +63,8 @@ import java.time.YearMonth
 fun DashboardScreen(
     onOpenCategory: (category: String, month: YearMonth) -> Unit,
     onOpenActivity: () -> Unit,
+    onOpenFuliza: () -> Unit,
+    onOpenBills: () -> Unit,
 ) {
     val vm = appViewModel { c, _ -> DashboardViewModel(c) }
     val state by vm.state.collectAsStateWithLifecycle()
@@ -84,7 +90,7 @@ fun DashboardScreen(
                 message = "There are no SMS from MPESA in this phone's inbox. If your messages are on another phone, export them (e.g. with Termux's termux-sms-list) and import the file.",
                 primaryAction = "Import from a file" to importFile,
             )
-            else -> DashboardContent(state, vm::previousMonth, vm::nextMonth, onOpenCategory, onOpenActivity)
+            else -> DashboardContent(state, vm::previousMonth, vm::nextMonth, onOpenCategory, onOpenActivity, onOpenFuliza, onOpenBills)
         }
     }
 }
@@ -96,6 +102,8 @@ private fun DashboardContent(
     onNext: () -> Unit,
     onOpenCategory: (String, YearMonth) -> Unit,
     onOpenActivity: () -> Unit,
+    onOpenFuliza: () -> Unit,
+    @Suppress("UNUSED_PARAMETER") onOpenBills: () -> Unit,
 ) {
     var selectedBar by rememberSaveable(state.month.toString()) { mutableIntStateOf(11) }
     LazyColumn(
@@ -120,6 +128,7 @@ private fun DashboardContent(
         } else {
             item { NetCard(totals) }
             item { StatGrid(totals) }
+            state.fuliza?.takeIf { it.hasHistory }?.let { f -> item { FulizaCard(f, totals, onOpenFuliza) } }
             if (state.categories.isNotEmpty()) {
                 item {
                     AppCard {
@@ -181,11 +190,30 @@ private fun StatGrid(t: MonthTotals) {
                 Modifier.weight(1f),
             )
         }
+    }
+}
+
+/** Fuliza at a glance: what's owed and when it's due, plus this month's borrowing. Opens the tracker. */
+@Composable
+private fun FulizaCard(f: FulizaSummary, t: MonthTotals, onOpen: () -> Unit) {
+    AppCard(onClick = onOpen) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Text("Fuliza", style = MaterialTheme.typography.titleMedium, modifier = Modifier.weight(1f))
+            Icon(Icons.AutoMirrored.Filled.KeyboardArrowRight, contentDescription = "Open Fuliza", tint = AresMuted)
+        }
+        Spacer(Modifier.height(6.dp))
+        if (f.owedCents > 0) {
+            Text("Owed ${formatCents(f.owedCents)}", style = Num.large)
+            dueText(f)?.let { (text, color) -> Text(text, style = MaterialTheme.typography.bodySmall, color = color) }
+        } else {
+            Text("All repaid", style = Num.large, color = AresGreen)
+        }
         if (t.fulizaCents > 0 || t.fulizaRepaidCents > 0) {
-            Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                StatTile("Fuliza borrowed", t.fulizaCents, null, Modifier.weight(1f))
-                StatTile("Fuliza repaid", t.fulizaRepaidCents, null, Modifier.weight(1f))
-            }
+            Spacer(Modifier.height(6.dp))
+            Text(
+                "This month: borrowed ${formatCents(t.fulizaCents)} · repaid ${formatCents(t.fulizaRepaidCents)} · fees ${formatCents(f.feesThisMonthCents)}",
+                style = MaterialTheme.typography.bodySmall, color = AresMuted,
+            )
         }
     }
 }

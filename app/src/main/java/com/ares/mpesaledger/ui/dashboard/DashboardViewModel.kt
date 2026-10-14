@@ -8,6 +8,7 @@ import com.ares.mpesaledger.data.ImportProgress
 import com.ares.mpesaledger.data.ImportResult
 import com.ares.mpesaledger.data.LedgerCounts
 import com.ares.mpesaledger.data.RecipientTotal
+import com.ares.mpesaledger.domain.FulizaSummary
 import com.ares.mpesaledger.domain.MonthSummary
 import com.ares.mpesaledger.domain.MonthTotals
 import com.ares.mpesaledger.ui.components.TrendPoint
@@ -35,6 +36,7 @@ data class DashboardState(
     val lastImport: ImportResult? = null,
     val hasSmsPermission: Boolean = false,
     val isDemo: Boolean = false,
+    val fuliza: FulizaSummary? = null,
 ) {
     val loaded: Boolean get() = counts != null && totals != null
     val ledgerEmpty: Boolean get() = counts?.transactions == 0
@@ -77,7 +79,8 @@ class DashboardViewModel(private val container: AppContainer) : ViewModel() {
                 isDemo = container.isDemo,
             )
         }
-    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), DashboardState(nowMonth(), true))
+    }.combine(repo.observeFuliza()) { state, fuliza -> state.copy(fuliza = fuliza) }
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), DashboardState(nowMonth(), true))
 
     fun previousMonth() { month.value = month.value.minusMonths(1) }
     fun nextMonth() { if (month.value < nowMonth()) month.value = month.value.plusMonths(1) }
