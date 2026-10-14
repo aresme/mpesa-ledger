@@ -25,6 +25,7 @@ abstract class AppDatabase : RoomDatabase() {
     abstract fun rules(): RuleDao
     abstract fun importState(): ImportStateDao
     abstract fun stats(): StatsDao
+    abstract fun budgets(): BudgetDao
 
     companion object {
         const val REAL_NAME = "mpesa.db"

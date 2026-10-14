@@ -67,6 +67,13 @@ interface TransactionDao {
     fun observeCategorySpending(start: Long, end: Long): Flow<List<CategoryTotal>>
 
     @Query(
+        """SELECT COALESCE(categoryOverride, category) AS category, SUM(amountCents) AS totalCents, COUNT(*) AS count
+           FROM transactions WHERE direction = 'out' AND timestamp >= :start AND timestamp < :end
+           GROUP BY 1 ORDER BY totalCents DESC"""
+    )
+    suspend fun categorySpending(start: Long, end: Long): List<CategoryTotal>
+
+    @Query(
         """SELECT counterparty, SUM(amountCents) AS totalCents, COUNT(*) AS count
            FROM transactions WHERE direction = 'out' AND timestamp >= :start AND timestamp < :end
            GROUP BY counterparty ORDER BY totalCents DESC LIMIT :limit"""
@@ -154,6 +161,28 @@ interface RuleDao {
     /** Same keyword + isUser replaces the old rule (unique index). */
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun upsert(rule: CategoryRuleEntity): Long
+}
+
+@Dao
+interface BudgetDao {
+    @Query("SELECT * FROM budgets ORDER BY category")
+    fun observeAll(): Flow<List<BudgetEntity>>
+
+    @Query("SELECT * FROM budgets")
+    suspend fun getAll(): List<BudgetEntity>
+
+    /**
+     * Setting/changing a limit resets the notified state so the new limit can alert this month.
+     * REPLACE rather than SQL UPSERT: ON CONFLICT DO UPDATE needs SQLite 3.24, and API 24 ships 3.9.
+     */
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun put(budget: BudgetEntity)
+
+    @Query("DELETE FROM budgets WHERE category = :category")
+    suspend fun delete(category: String)
+
+    @Query("UPDATE budgets SET lastNotifiedLevel = :level, lastNotifiedMonth = :month WHERE category = :category")
+    suspend fun markNotified(category: String, level: Int, month: Int)
 }
 
 @Dao

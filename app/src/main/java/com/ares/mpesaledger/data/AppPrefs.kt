@@ -10,7 +10,13 @@ class AppPrefs(context: Context) {
         get() = prefs.getBoolean(KEY_ONBOARDING_DONE, false)
         set(value) = prefs.edit().putBoolean(KEY_ONBOARDING_DONE, value).apply()
 
+    /** "Transactions" notifications are opt-in (spec: off by default). */
+    var notifyTransactions: Boolean
+        get() = prefs.getBoolean(KEY_NOTIFY_TRANSACTIONS, false)
+        set(value) = prefs.edit().putBoolean(KEY_NOTIFY_TRANSACTIONS, value).apply()
+
     private companion object {
         const val KEY_ONBOARDING_DONE = "onboarding_done"
+        const val KEY_NOTIFY_TRANSACTIONS = "notify_transactions"
     }
 }
