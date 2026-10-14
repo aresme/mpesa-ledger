@@ -19,7 +19,10 @@ enum class Kind(val key: String, val direction: Direction) {
     WITHDRAW("withdraw", Direction.OUT),
     DEPOSIT("deposit", Direction.IN),
     AIRTIME("airtime", Direction.OUT),
-    SAVINGS("savings", Direction.NONE);
+    SAVINGS("savings", Direction.NONE),
+
+    /** Paying back Fuliza. NONE: the funded payment was already counted as out. */
+    FULIZA_REPAY("fuliza_repay", Direction.NONE);
 
     companion object {
         fun fromKey(key: String): Kind? = entries.firstOrNull { it.key == key }

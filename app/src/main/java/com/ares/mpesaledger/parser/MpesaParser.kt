@@ -8,14 +8,21 @@ import java.util.regex.Pattern
 
 /**
  * Parses one M-Pesa confirmation SMS. Pure Kotlin/JVM: no Android imports, so it runs
- * in plain JVM unit tests. Ported from mpesa_ledger.py (spec §5), plus two improvements:
- * the balance regex also matches "M-PESA balance is" without "New", and withdraw agents
- * are split into "286412" (account) and "CITY STAR AGENCIES" (counterparty).
+ * in plain JVM unit tests. Ported from mpesa_ledger.py (spec §5), plus improvements:
+ * - balance also matches "M-PESA balance is" / "Your M-PESA balance is", with or without "Ksh"
+ * - withdraw agents are split into "286412" (account) and "CITY STAR AGENCIES" (counterparty)
+ * - Fuliza repayments (seen on the real phone, 2026-10) are their own kind
  *
  * To support a new SMS format: add a [Kind] (if needed), a pattern in [patterns] at the
  * right priority, and a fixture test with a masked real message.
  */
 object MpesaParser {
+
+    /**
+     * Bump whenever parsing output changes for existing messages. A higher version than the
+     * one stored in import_state triggers a full inbox rescan, so old messages get re-parsed.
+     */
+    const val VERSION = 2
 
     val NAIROBI: ZoneId = ZoneId.of("Africa/Nairobi")
 
@@ -27,7 +34,7 @@ object MpesaParser {
     private val WHITESPACE = Pattern.compile("""[\s   -     　]+""")
     private val CODE = Pattern.compile("""^\s*([A-Z0-9]{10})\s+confirmed""", CI)
     private val WHEN = Pattern.compile("""on (\d{1,2})/(\d{1,2})/(\d{2,4}) at (\d{1,2}):(\d{2})\s?([AP]M)""", CI)
-    private val BALANCE = Pattern.compile("""(?:New )?M-PESA balance is $KSH""", CI)
+    private val BALANCE = Pattern.compile("""(?:New |Your )?M-PESA balance is (?:Ksh\s?)?$AMT""", CI)
     private val FEE = Pattern.compile("""(?:Transaction cost,?|Access Fee charged)\s*$KSH""", CI)
     private val PHONE_TAIL = Pattern.compile("""\s+((?:\+?254|0)[\d*]{6,12})$""")
     private val AGENT = Pattern.compile("""^(\d+)\s*-\s*(.+)$""")
@@ -43,6 +50,7 @@ object MpesaParser {
         Kind.DEPOSIT to """Give $KSH cash to (.+?)\s*New M-PESA""",
         Kind.AIRTIME to """You bought $KSH of airtime""",
         Kind.SAVINGS to """transferred $KSH to your M-Shwari""",
+        Kind.FULIZA_REPAY to """$KSH from your M-PESA has been used to (?:fully |partially )?pay your outstanding Fuliza""",
     ).map { (kind, regex) -> kind to Pattern.compile(regex, CI) }
 
     fun parse(body: String): ParseResult {
@@ -66,7 +74,7 @@ object MpesaParser {
         var account: String? = null
 
         when (kind) {
-            Kind.FULIZA -> counterparty = "Fuliza"
+            Kind.FULIZA, Kind.FULIZA_REPAY -> counterparty = "Fuliza"
             Kind.AIRTIME -> counterparty = "Airtime"
             Kind.SAVINGS -> counterparty = "M-Shwari"
             else -> {

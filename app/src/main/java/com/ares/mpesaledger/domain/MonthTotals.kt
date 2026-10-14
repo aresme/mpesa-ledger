@@ -9,6 +9,7 @@ data class MonthTotals(
     val outCents: Long,
     val feeCents: Long,
     val fulizaCents: Long,
+    val fulizaRepaidCents: Long,
     val savedCents: Long,
 ) {
     val netCents: Long get() = inCents - outCents - feeCents

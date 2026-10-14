@@ -133,6 +133,37 @@ class EdgeCaseTest {
         assertEquals(listOf("a\r\nb", "c", "d"), blocks)
     }
 
+    // Shapes taken from real (masked) messages seen on the phone, 2026-10. No date, no "Ksh" on the balance.
+    @Test fun `fuliza repayment, full and partial`() {
+        val full = parseTx(
+            "QAB1234578\n Confirmed. Ksh 50.00 from your M-PESA has been used to fully pay your outstanding Fuliza M-PESA. " +
+                "Available Fuliza M-PESA limit is Ksh 500.00. Your M-PESA balance is 1234.56."
+        )
+        assertEquals(Kind.FULIZA_REPAY, full.kind)
+        assertEquals(Direction.NONE, full.direction)
+        assertEquals(5_000L, full.amountCents)
+        assertEquals(123_456L, full.balanceCents)
+        assertEquals("Fuliza", full.counterparty)
+        assertNull(full.timestamp)
+        assertNull(full.feeCents)
+
+        val partial = parseTx(
+            "QAB1234579 Confirmed. Ksh 20.00 from your M-PESA has been used to partially pay your outstanding Fuliza M-PESA. " +
+                "Your available Fuliza M-PESA limit is Ksh 480.00. Your M-PESA balance is 0.00."
+        )
+        assertEquals(Kind.FULIZA_REPAY, partial.kind)
+        assertEquals(2_000L, partial.amountCents)
+        assertEquals(0L, partial.balanceCents)
+    }
+
+    @Test fun `fuliza limit is never mistaken for the balance`() {
+        val tx = parseTx(
+            "QAB1234581 Confirmed. Ksh 50.00 from your M-PESA has been used to fully pay your outstanding Fuliza M-PESA. " +
+                "Available Fuliza M-PESA limit is Ksh 500.00."
+        )
+        assertNull(tx.balanceCents)
+    }
+
     private fun parseTx(body: String): ParsedTransaction {
         val result = MpesaParser.parse(body)
         assertTrue("expected a transaction, got $result", result is ParseResult.Transaction)

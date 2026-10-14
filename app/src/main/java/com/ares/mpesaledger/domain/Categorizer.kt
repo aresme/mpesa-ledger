@@ -43,7 +43,7 @@ class Categorizer(rules: List<CategoryRule>) {
             Kind.WITHDRAW -> "Cash out"
             Kind.AIRTIME -> "Airtime"
             Kind.SENT -> "People"
-            Kind.FULIZA -> "Fuliza"
+            Kind.FULIZA, Kind.FULIZA_REPAY -> "Fuliza"
             Kind.SAVINGS -> "Savings"
             Kind.PAYBILL, Kind.TILL -> UNCATEGORIZED
         }

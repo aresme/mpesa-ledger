@@ -35,6 +35,7 @@ class FakeLedger {
             outCents = inMonth.filter { it.direction == Direction.OUT }.sumOf { it.amountCents },
             feeCents = inMonth.sumOf { it.feeCents ?: 0 },
             fulizaCents = inMonth.filter { it.kind == Kind.FULIZA }.sumOf { it.amountCents },
+            fulizaRepaidCents = inMonth.filter { it.kind == Kind.FULIZA_REPAY }.sumOf { it.amountCents },
             savedCents = inMonth.filter { it.kind == Kind.SAVINGS }.sumOf { it.amountCents },
         )
     }

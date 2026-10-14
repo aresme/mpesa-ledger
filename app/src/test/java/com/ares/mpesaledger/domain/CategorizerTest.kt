@@ -37,7 +37,7 @@ class CategorizerTest {
         val expected = mapOf(
             Kind.RECEIVED to "Income", Kind.DEPOSIT to "Cash in", Kind.WITHDRAW to "Cash out",
             Kind.AIRTIME to "Airtime", Kind.SENT to "People", Kind.FULIZA to "Fuliza",
-            Kind.SAVINGS to "Savings", Kind.TILL to "Uncategorized", Kind.PAYBILL to "Uncategorized",
+            Kind.SAVINGS to "Savings", Kind.FULIZA_REPAY to "Fuliza", Kind.TILL to "Uncategorized", Kind.PAYBILL to "Uncategorized",
         )
         expected.forEach { (kind, category) -> assertEquals(kind.key, category, none.categorize(kind, "X", null)) }
     }

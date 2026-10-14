@@ -82,7 +82,7 @@ class FixtureTest {
 
     @Test fun `september totals`() {
         assertEquals(
-            MonthTotals(inCents = 300000, outCents = 357000, feeCents = 4493, fulizaCents = 19250, savedCents = 0),
+            MonthTotals(inCents = 300000, outCents = 357000, feeCents = 4493, fulizaCents = 19250, fulizaRepaidCents = 0, savedCents = 0),
             totalsFor(YearMonth.of(2026, 9)),
         )
         assertEquals(-61493L, totalsFor(YearMonth.of(2026, 9)).netCents)
@@ -90,7 +90,7 @@ class FixtureTest {
 
     @Test fun `october totals`() {
         assertEquals(
-            MonthTotals(inCents = 550000, outCents = 299000, feeCents = 700, fulizaCents = 0, savedCents = 20000),
+            MonthTotals(inCents = 550000, outCents = 299000, feeCents = 700, fulizaCents = 0, fulizaRepaidCents = 0, savedCents = 20000),
             totalsFor(YearMonth.of(2026, 10)),
         )
         assertEquals(250300L, totalsFor(YearMonth.of(2026, 10)).netCents)
