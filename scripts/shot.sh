@@ -1,10 +1,20 @@
 #!/usr/bin/env bash
-# Screenshot (and UI dump) into screenshots/. Make sure the app shows DEMO data first.
+# Screenshot (and UI dump) into screenshots/.
+# Refuses unless the debug app is in DEMO mode, so real transactions never land in a
+# screenshot. Override only when the user explicitly allows it: ALLOW_REAL=1 scripts/shot.sh ...
 # Usage: scripts/shot.sh <name> [serial]
 set -euo pipefail
 cd "$(dirname "$0")/.."
 name="${1:?usage: scripts/shot.sh <name> [serial]}"
 source scripts/_adb.sh "${2:-}"
+
+if [[ "${ALLOW_REAL:-}" != "1" ]]; then
+    prefs=$(adb_ shell run-as "$PKG" cat shared_prefs/devtools.xml 2>/dev/null || true)
+    if ! grep -q 'name="demo_mode" value="true"' <<<"$prefs"; then
+        echo "Refusing: app is not in DEMO mode (real data could be on screen)." >&2
+        exit 3
+    fi
+fi
 
 mkdir -p screenshots
 adb_ exec-out screencap -p > "screenshots/$name.png"
