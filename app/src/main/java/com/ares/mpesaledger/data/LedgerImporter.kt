@@ -6,6 +6,8 @@ import com.ares.mpesaledger.domain.Categorizer
 import com.ares.mpesaledger.domain.CategoryRule
 import com.ares.mpesaledger.parser.Kind
 import com.ares.mpesaledger.parser.MpesaParser
+import com.ares.mpesaledger.parser.OtherSmsParser
+import com.ares.mpesaledger.parser.Source
 import com.ares.mpesaledger.parser.ParseResult
 import com.ares.mpesaledger.parser.ParsedTransaction
 import com.ares.mpesaledger.parser.RawSms
@@ -35,7 +37,7 @@ data class ImportResult(
  * keyed by content hash. One import at a time (inbox scan on resume, file import, live SMS
  * can all race), serialized by [mutex].
  */
-class LedgerImporter(private val db: AppDatabase) {
+class LedgerImporter(private val db: AppDatabase, private val onParserUpgraded: suspend () -> Unit = {}) {
 
     private val mutex = Mutex()
     private val _progress = MutableStateFlow<ImportProgress?>(null)
@@ -69,6 +71,7 @@ class LedgerImporter(private val db: AppDatabase) {
                 else -> "inbox"
             }
             val result = importLocked(messages, source)
+            if (parserUpgraded) onParserUpgraded()
             val newest = maxOf(messages.mapNotNull { it.date }.maxOrNull() ?: 0L, state?.lastInboxDate ?: 0L)
             db.importState().put(ImportStateEntity(lastInboxDate = newest, parserVersion = MpesaParser.VERSION))
             result.copy(durationMs = result.durationMs + readMs).also {
@@ -100,7 +103,9 @@ class LedgerImporter(private val db: AppDatabase) {
                     val nowParsed = if (cleanUnparsed) ArrayList<String>() else null
                     for (sms in batch) {
                         val p0 = System.nanoTime()
-                        val parsed = MpesaParser.parse(sms.body)
+                        val parsed = Source.of(sms.sender)?.takeIf { it != Source.MPESA }
+                            ?.let { OtherSmsParser.parse(it, sms.body, sms.date) }
+                            ?: MpesaParser.parse(sms.body)
                         parseNs += System.nanoTime() - p0
                         when (val result = parsed) {
                             ParseResult.NotTransaction -> skipped++

@@ -51,7 +51,7 @@ class LedgerDatabaseTest {
     }
 
     @Test fun defaultRulesAreSeededAndApplied() = runBlocking {
-        assertEquals(16, db.rules().getAll().size)
+        assertEquals(21, db.rules().getAll().size)
         importer.import(fixture, "test")
         assertEquals("Electricity", db.transactions().effectiveCategory("TJA3D4E5F6", "paybill"))
         assertEquals("Food out", db.transactions().effectiveCategory("TJA7H8I9J0", "till"))

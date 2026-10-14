@@ -5,6 +5,8 @@ import com.ares.mpesaledger.AppLog
 import com.ares.mpesaledger.notify.Notifications
 import com.ares.mpesaledger.parser.Direction
 import com.ares.mpesaledger.parser.MpesaParser
+import com.ares.mpesaledger.parser.OtherSmsParser
+import com.ares.mpesaledger.parser.Source
 import com.ares.mpesaledger.parser.ParseResult
 import com.ares.mpesaledger.parser.RawSms
 import com.ares.mpesaledger.ui.format.formatKsh
@@ -19,14 +21,15 @@ class LiveSmsPipeline(private val container: AppContainer) {
 
     enum class Origin { LIVE, DEBUG }
 
-    suspend fun onSms(body: String, receivedAt: Long, origin: Origin) {
+    suspend fun onSms(body: String, receivedAt: Long, origin: Origin, sender: String? = null) {
         // Real SMS must never land in the demo DB; the next real-mode inbox scan picks it up.
         if (origin == Origin.LIVE && container.isDemo) {
             AppLog.d { "live sms ignored: demo mode" }
             return
         }
-        val parsed = MpesaParser.parse(body)
-        val result = container.importer.import(listOf(RawSms(body, date = receivedAt)), source = "live sms ($origin)")
+        val src = Source.of(sender)?.takeIf { it != Source.MPESA }
+        val parsed = src?.let { OtherSmsParser.parse(it, body, receivedAt) } ?: MpesaParser.parse(body)
+        val result = container.importer.import(listOf(RawSms(body, date = receivedAt, sender = sender)), source = "live sms ($origin)")
         when (parsed) {
             ParseResult.NotTransaction -> AppLog.d { "live sms ($origin): not a transaction" }
             is ParseResult.Unparsed -> AppLog.d { "live sms ($origin): unparsed ${parsed.code}" }

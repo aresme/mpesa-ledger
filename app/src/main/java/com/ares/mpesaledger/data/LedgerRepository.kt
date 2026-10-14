@@ -16,6 +16,8 @@ import com.ares.mpesaledger.domain.BillDetector
 import com.ares.mpesaledger.domain.FulizaEvent
 import com.ares.mpesaledger.domain.FulizaSummary
 import com.ares.mpesaledger.domain.FulizaTracker
+import com.ares.mpesaledger.domain.OkoaSummary
+import com.ares.mpesaledger.domain.OkoaTracker
 import com.ares.mpesaledger.parser.FulizaDetails
 import java.time.Instant
 import java.time.YearMonth
@@ -71,6 +73,12 @@ class LedgerRepository(private val db: AppDatabase) {
         tx.observeBillPayments(billWindowStart()).map { BillDetector.detect(it) }
 
     suspend fun bills(): List<Bill> = BillDetector.detect(tx.billPayments(billWindowStart()))
+
+    fun observeOkoa(): Flow<OkoaSummary> = tx.observeOkoa().map { rows ->
+        OkoaTracker.summarize(rows.map {
+            OkoaTracker.Event(it.kind == Kind.OKOA_BORROW.key, it.amountCents, it.feeCents ?: 0, it.balanceCents, OkoaTracker.dueOf(it.account), it.timestamp)
+        })
+    }
 
     fun observeFuliza(): Flow<FulizaSummary> = tx.observeFuliza().map { rows ->
         FulizaTracker.summarize(rows.map {

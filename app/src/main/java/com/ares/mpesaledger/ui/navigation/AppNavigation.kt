@@ -34,6 +34,7 @@ import com.ares.mpesaledger.ui.onboarding.OnboardingScreen
 import com.ares.mpesaledger.ui.bills.BillsScreen
 import com.ares.mpesaledger.ui.fuliza.FulizaScreen
 import com.ares.mpesaledger.ui.rules.RulesScreen
+import com.ares.mpesaledger.ui.sources.SourcesScreen
 import com.ares.mpesaledger.ui.settings.SettingsScreen
 import com.ares.mpesaledger.ui.theme.AresBlack
 import com.ares.mpesaledger.ui.theme.AresGreen
@@ -55,14 +56,15 @@ object Routes {
     const val RULES = "rules"
     const val FULIZA = "fuliza"
     const val BILLS = "bills"
+    const val SOURCES = "sources"
     private const val DETAIL = "detail"
 
     const val ACTIVITY_PATTERN =
-        "$ACTIVITY?${TransactionsViewModel.ARG_CATEGORY}={${TransactionsViewModel.ARG_CATEGORY}}&${TransactionsViewModel.ARG_MONTH}={${TransactionsViewModel.ARG_MONTH}}"
+        "$ACTIVITY?${TransactionsViewModel.ARG_CATEGORY}={${TransactionsViewModel.ARG_CATEGORY}}&${TransactionsViewModel.ARG_MONTH}={${TransactionsViewModel.ARG_MONTH}}&${TransactionsViewModel.ARG_KIND}={${TransactionsViewModel.ARG_KIND}}"
     const val DETAIL_PATTERN = "$DETAIL/{${DetailViewModel.ARG_CODE}}/{${DetailViewModel.ARG_KIND}}"
 
-    fun activity(category: String? = null, month: YearMonth? = null) =
-        "$ACTIVITY?${TransactionsViewModel.ARG_CATEGORY}=${Uri.encode(category.orEmpty())}&${TransactionsViewModel.ARG_MONTH}=${month ?: ""}"
+    fun activity(category: String? = null, month: YearMonth? = null, kind: String? = null) =
+        "$ACTIVITY?${TransactionsViewModel.ARG_CATEGORY}=${Uri.encode(category.orEmpty())}&${TransactionsViewModel.ARG_MONTH}=${month ?: ""}&${TransactionsViewModel.ARG_KIND}=${kind.orEmpty()}"
 
     fun detail(code: String, kind: String) = "$DETAIL/${Uri.encode(code)}/${Uri.encode(kind)}"
 }
@@ -107,6 +109,7 @@ fun AppNavigation(
                     onOpenActivity = { nav.navigateTab(Routes.ACTIVITY_PATTERN) },
                     onOpenFuliza = { nav.navigate(Routes.FULIZA) },
                     onOpenBills = { nav.navigate(Routes.BILLS) },
+                    onOpenKind = { kind -> nav.navigate(Routes.activity(kind = kind)) },
                 )
             }
             composable(
@@ -114,6 +117,7 @@ fun AppNavigation(
                 arguments = listOf(
                     navArgument(TransactionsViewModel.ARG_CATEGORY) { type = NavType.StringType; defaultValue = "" },
                     navArgument(TransactionsViewModel.ARG_MONTH) { type = NavType.StringType; defaultValue = "" },
+                    navArgument(TransactionsViewModel.ARG_KIND) { type = NavType.StringType; defaultValue = "" },
                 ),
             ) {
                 TransactionsScreen(onOpen = { code, kind -> nav.navigate(Routes.detail(code, kind)) })
@@ -123,6 +127,7 @@ fun AppNavigation(
                 SettingsScreen(
                     onOpenUnparsed = { nav.navigate(Routes.UNPARSED) },
                     onOpenRules = { nav.navigate(Routes.RULES) },
+                    onOpenSources = { nav.navigate(Routes.SOURCES) },
                     demoToggleAvailable = demoToggleAvailable,
                     onToggleDemo = onToggleDemo,
                 )
@@ -138,6 +143,7 @@ fun AppNavigation(
             composable(Routes.RULES) { RulesScreen(onBack = { nav.popBackStack() }) }
             composable(Routes.FULIZA) { FulizaScreen(onBack = { nav.popBackStack() }) }
             composable(Routes.BILLS) { BillsScreen(onBack = { nav.popBackStack() }) }
+            composable(Routes.SOURCES) { SourcesScreen(onBack = { nav.popBackStack() }) }
         }
     }
 }

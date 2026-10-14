@@ -15,6 +15,10 @@ object DefaultRules {
         "TOTALENERGIES" to "Fuel", "RUBIS" to "Fuel", "SHELL" to "Fuel",
         "JAVA HOUSE" to "Food out", "KFC" to "Food out",
         "UBER" to "Transport", "BOLT" to "Transport",
+        // Added in rules v2 (from the user's real payees, 2026-10-15).
+        "SAFARICOM DATA BUNDLES" to "Data bundles", "SAFARICOM OFFERS" to "Data bundles",
+        "SAFARICOM POSTPAID BUNDLES" to "Data bundles", "MAWINGU AIRTIME" to "Airtime",
+        "GLOBALPAY" to "Online payments",
     ).map { (keyword, category) -> CategoryRule(keyword, category, isUser = false) }
 }
 
@@ -45,6 +49,11 @@ class Categorizer(rules: List<CategoryRule>) {
             Kind.SENT -> "People"
             Kind.FULIZA, Kind.FULIZA_REPAY -> "Fuliza"
             Kind.SAVINGS, Kind.SAVINGS_WITHDRAW -> "Savings"
+            Kind.GLOBALPAY -> "Online payments"
+            Kind.BANK_IN -> "Bank"
+            Kind.OKOA_BORROW, Kind.OKOA_REPAY -> "Okoa Jahazi"
+            Kind.AIRTIME_RECHARGE, Kind.AIRTIME_RECEIVED -> "Airtime"
+            Kind.DATA_BUNDLE -> "Data bundles"
             Kind.PAYBILL, Kind.TILL -> UNCATEGORIZED
         }
     }

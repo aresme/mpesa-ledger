@@ -60,6 +60,7 @@ import com.ares.mpesaledger.ui.theme.Num
 fun SettingsScreen(
     onOpenUnparsed: () -> Unit,
     onOpenRules: () -> Unit,
+    onOpenSources: () -> Unit,
     demoToggleAvailable: Boolean,
     onToggleDemo: (Boolean) -> Unit,
 ) {
@@ -82,7 +83,7 @@ fun SettingsScreen(
                     if (!state.isDemo) {
                         ListRow(
                             title = "SMS access",
-                            subtitle = if (state.hasSmsPermission) "Allowed · reads only messages from MPESA" else "Not allowed · tap to allow",
+                            subtitle = if (state.hasSmsPermission) "Allowed · reads only the senders under Sources" else "Not allowed · tap to allow",
                             icon = AppIcons.Sms,
                             iconTint = if (state.hasSmsPermission) MaterialTheme.colorScheme.primary else AresAmber,
                             onClick = if (state.hasSmsPermission) null else requestSms,
@@ -96,6 +97,13 @@ fun SettingsScreen(
                         )
                         HorizontalDivider()
                     }
+                    ListRow(
+                        title = "Sources",
+                        subtitle = "M-Pesa plus GlobalPay, Safaricom, Okoa Jahazi, KCB, Ziidi, e-top-up",
+                        icon = AppIcons.Sms,
+                        onClick = onOpenSources,
+                    )
+                    HorizontalDivider()
                     ListRow(title = "Import from file", subtitle = ".txt (blank-line separated) or Termux .json", icon = AppIcons.FileOpen, onClick = importFile)
                     HorizontalDivider()
                     ListRow(

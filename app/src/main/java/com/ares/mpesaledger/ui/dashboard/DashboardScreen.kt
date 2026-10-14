@@ -36,6 +36,7 @@ import com.ares.mpesaledger.data.RecipientTotal
 import com.ares.mpesaledger.domain.Bill
 import com.ares.mpesaledger.domain.BillStatus
 import com.ares.mpesaledger.domain.FulizaSummary
+import com.ares.mpesaledger.domain.OkoaSummary
 import com.ares.mpesaledger.ui.bills.billStatusText
 import com.ares.mpesaledger.domain.MonthTotals
 import com.ares.mpesaledger.ui.fuliza.dueText
@@ -68,6 +69,7 @@ fun DashboardScreen(
     onOpenActivity: () -> Unit,
     onOpenFuliza: () -> Unit,
     onOpenBills: () -> Unit,
+    onOpenKind: (kind: String) -> Unit,
 ) {
     val vm = appViewModel { c, _ -> DashboardViewModel(c) }
     val state by vm.state.collectAsStateWithLifecycle()
@@ -83,7 +85,7 @@ fun DashboardScreen(
             state.ledgerEmpty && !state.hasSmsPermission -> EmptyState(
                 icon = AppIcons.Sms,
                 title = "Allow SMS access",
-                message = "M-Pesa Ledger reads only messages from MPESA to build your ledger. Nothing leaves this phone: the app has no internet access at all.",
+                message = "M-Pesa Ledger reads only M-Pesa and the financial senders you allow (Settings → Sources) to build your ledger. Nothing leaves this phone: the app has no internet access at all.",
                 primaryAction = "Allow SMS access" to requestSms,
                 secondaryAction = "Import from a file instead" to importFile,
             )
@@ -93,7 +95,7 @@ fun DashboardScreen(
                 message = "There are no SMS from MPESA in this phone's inbox. If your messages are on another phone, export them (e.g. with Termux's termux-sms-list) and import the file.",
                 primaryAction = "Import from a file" to importFile,
             )
-            else -> DashboardContent(state, vm::previousMonth, vm::nextMonth, onOpenCategory, onOpenActivity, onOpenFuliza, onOpenBills)
+            else -> DashboardContent(state, vm::previousMonth, vm::nextMonth, onOpenCategory, onOpenActivity, onOpenFuliza, onOpenBills, onOpenKind)
         }
     }
 }
@@ -107,6 +109,7 @@ private fun DashboardContent(
     onOpenActivity: () -> Unit,
     onOpenFuliza: () -> Unit,
     onOpenBills: () -> Unit,
+    onOpenKind: (String) -> Unit,
 ) {
     var selectedBar by rememberSaveable(state.month.toString()) { mutableIntStateOf(11) }
     LazyColumn(
@@ -133,6 +136,7 @@ private fun DashboardContent(
             item { StatGrid(totals) }
             if (state.bills.isNotEmpty()) item { BillsCard(state.bills, onOpenBills) }
             state.fuliza?.takeIf { it.hasHistory }?.let { f -> item { FulizaCard(f, totals, onOpenFuliza) } }
+            state.okoa?.takeIf { it.hasHistory }?.let { o -> item { OkoaCard(o) { onOpenKind("okoa") } } }
             if (state.categories.isNotEmpty()) {
                 item {
                     AppCard {
@@ -217,6 +221,33 @@ private fun BillsCard(bills: List<Bill>, onOpen: () -> Unit) {
                 Text(formatCents(b.usualAmountCents), style = Num.medium)
             }
         }
+    }
+}
+
+/** Okoa Jahazi airtime credit: owed and due. Opens Activity filtered to Okoa loans. */
+@Composable
+private fun OkoaCard(o: OkoaSummary, onOpen: () -> Unit) {
+    AppCard(onClick = onOpen) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Text("Okoa Jahazi", style = MaterialTheme.typography.titleMedium, modifier = Modifier.weight(1f))
+            Text("airtime credit", style = MaterialTheme.typography.labelMedium, color = AresMuted)
+            Icon(Icons.AutoMirrored.Filled.KeyboardArrowRight, contentDescription = "Open Okoa Jahazi", tint = AresMuted)
+        }
+        Spacer(Modifier.height(6.dp))
+        if (o.owedCents > 0) {
+            Text("Owed ${formatCents(o.owedCents)}", style = Num.large)
+            o.dueDate?.let { due ->
+                val today = java.time.LocalDate.now(com.ares.mpesaledger.parser.MpesaParser.NAIROBI)
+                val late = due.isBefore(today)
+                Text(
+                    (if (late) "Overdue since " else "Pay by ") + due.format(java.time.format.DateTimeFormatter.ofPattern("EEE, d MMM", java.util.Locale.ENGLISH)),
+                    style = MaterialTheme.typography.bodySmall, color = if (late) com.ares.mpesaledger.ui.theme.AresRed else AresMuted,
+                )
+            }
+        } else {
+            Text("All repaid", style = Num.large, color = AresGreen)
+        }
+        Text("${o.loans} loan${if (o.loans == 1) "" else "s"} in your messages", style = MaterialTheme.typography.bodySmall, color = AresMuted)
     }
 }
 

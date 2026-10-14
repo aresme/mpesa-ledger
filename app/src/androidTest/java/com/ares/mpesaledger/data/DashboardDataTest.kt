@@ -80,7 +80,7 @@ class DashboardDataTest {
         repo.wipe()
         val counts = repo.observeCounts().first()
         assertEquals(0, counts.transactions)
-        assertEquals(16, counts.rules)               // defaults back, user rule gone
+        assertEquals(21, counts.rules)               // defaults back, user rule gone
         assertEquals(0, repo.observeBudgets().first().size)
         assertEquals(null, db.importState().get())   // next inbox sync starts from scratch
     }

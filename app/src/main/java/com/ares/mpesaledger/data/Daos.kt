@@ -109,15 +109,18 @@ interface TransactionDao {
     /** Outgoing payments that can form bills, since [since] (epoch millis). */
     @Query(
         """SELECT kind, counterparty, account, amountCents, timestamp FROM transactions
-           WHERE direction = 'out' AND kind IN ('paybill', 'till', 'sent') AND timestamp >= :since"""
+           WHERE direction = 'out' AND kind IN ('paybill', 'till', 'sent', 'globalpay') AND timestamp >= :since"""
     )
     fun observeBillPayments(since: Long): Flow<List<Payment>>
 
     @Query(
         """SELECT kind, counterparty, account, amountCents, timestamp FROM transactions
-           WHERE direction = 'out' AND kind IN ('paybill', 'till', 'sent') AND timestamp >= :since"""
+           WHERE direction = 'out' AND kind IN ('paybill', 'till', 'sent', 'globalpay') AND timestamp >= :since"""
     )
     suspend fun billPayments(since: Long): List<Payment>
+
+    @Query("SELECT * FROM transactions WHERE kind IN ('okoa', 'okoa_repay')")
+    fun observeOkoa(): Flow<List<TransactionEntity>>
 
     /** Fuliza loans and repayments only (a handful of rows), for the Fuliza tracker. */
     @Query("SELECT * FROM transactions WHERE kind IN ('fuliza', 'fuliza_repay')")

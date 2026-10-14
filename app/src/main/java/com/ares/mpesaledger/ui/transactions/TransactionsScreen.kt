@@ -168,7 +168,7 @@ fun TransactionRow(row: TxListItem, onClick: () -> Unit) {
             when (row.direction) {
                 "in" -> Text(formatSigned(row.amountCents, true), style = Num.medium, color = AresGreen)
                 "out" -> Text(formatSigned(row.amountCents, false), style = Num.medium, color = OutAmount)
-                else -> Text(formatCents(row.amountCents), style = Num.medium, color = AresMuted)
+                else -> if (row.amountCents > 0) Text(formatCents(row.amountCents), style = Num.medium, color = AresMuted)
             }
             Text(kindLabel(row.kind), style = MaterialTheme.typography.bodySmall, color = AresMuted)
         }

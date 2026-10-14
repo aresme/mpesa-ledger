@@ -41,6 +41,7 @@ class TransactionsViewModel(container: AppContainer, saved: SavedStateHandle) : 
         ListFilter(
             month = saved.get<String>(ARG_MONTH)?.takeIf { it.isNotBlank() }?.let(YearMonth::parse),
             category = saved.get<String>(ARG_CATEGORY)?.takeIf { it.isNotBlank() },
+            kind = saved.get<String>(ARG_KIND)?.takeIf { it.isNotBlank() },
         )
     )
 
@@ -73,6 +74,7 @@ class TransactionsViewModel(container: AppContainer, saved: SavedStateHandle) : 
     companion object {
         const val ARG_MONTH = "month"
         const val ARG_CATEGORY = "category"
+        const val ARG_KIND = "kind"
 
         fun group(items: List<TxListItem>): List<DaySection> =
             items.groupBy { it.timestamp?.let(::localDate) }.map { (date, rows) ->

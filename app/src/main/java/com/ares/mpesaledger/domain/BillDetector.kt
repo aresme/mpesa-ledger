@@ -42,7 +42,8 @@ object BillDetector {
     /** Not paid this many days after the usual day = overdue. */
     const val OVERDUE_AFTER_DAYS = 3
 
-    private val BILL_KINDS = setOf("paybill", "till", "sent")
+    /** GlobalPay is here for card subscriptions (streaming, ChatGPT, …). */
+    private val BILL_KINDS = setOf("paybill", "till", "sent", "globalpay")
 
     fun key(kind: String, counterparty: String, account: String?): String =
         listOf(kind, counterparty.trim().uppercase(), if (kind == "paybill") account?.trim()?.uppercase().orEmpty() else "")

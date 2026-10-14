@@ -37,4 +37,19 @@ class MigrationTest {
             }
         }
     }
+
+    @Test fun migrate2To3AddsNewDefaultRulesWithoutTouchingUserRules() {
+        helper.createDatabase(dbName, 2).use { db ->
+            db.execSQL("INSERT INTO category_rules (keyword, category, isUser) VALUES ('NAIVAS', 'Groceries', 0)")
+            db.execSQL("INSERT INTO category_rules (keyword, category, isUser) VALUES ('SAFARICOM DATA BUNDLES', 'Internet', 1)")
+        }
+        helper.runMigrationsAndValidate(dbName, 3, true, *AppDatabase.MIGRATIONS).use { db ->
+            db.query("SELECT category FROM category_rules WHERE keyword = 'SAFARICOM DATA BUNDLES' AND isUser = 1").use { c ->
+                c.moveToFirst(); assertEquals("Internet", c.getString(0)) // the user's own rule is kept
+            }
+            db.query("SELECT COUNT(*) FROM category_rules WHERE isUser = 0").use { c ->
+                c.moveToFirst(); assertEquals(6, c.getInt(0)) // NAIVAS + 5 new defaults
+            }
+        }
+    }
 }

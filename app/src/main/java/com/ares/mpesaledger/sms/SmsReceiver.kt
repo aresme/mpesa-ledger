@@ -6,6 +6,7 @@ import android.content.Intent
 import android.provider.Telephony
 import com.ares.mpesaledger.AppLog
 import com.ares.mpesaledger.MpesaLedgerApp
+import com.ares.mpesaledger.parser.Source
 import kotlinx.coroutines.launch
 
 /**
@@ -22,16 +23,17 @@ class SmsReceiver : BroadcastReceiver() {
         if (intent.action != Telephony.Sms.Intents.SMS_RECEIVED_ACTION) return
         val parts = Telephony.Sms.Intents.getMessagesFromIntent(intent)?.filterNotNull().orEmpty()
         if (parts.isEmpty()) return
+        val container = (context.applicationContext as MpesaLedgerApp).container
+        val wanted = container.prefs.enabledSources + Source.MPESA
         val messages = parts.groupBy { it.originatingAddress }
-            .filterKeys { InboxReader.isMpesaSender(it) }
-            .map { (_, ps) -> ps.joinToString("") { it.messageBody.orEmpty() } to ps.first().timestampMillis }
+            .filterKeys { Source.of(it) in wanted }
+            .map { (sender, ps) -> Triple(sender, ps.joinToString("") { it.messageBody.orEmpty() }, ps.first().timestampMillis) }
         if (messages.isEmpty()) return
 
-        val container = (context.applicationContext as MpesaLedgerApp).container
         val pending = goAsync()
         container.appScope.launch {
             try {
-                messages.forEach { (body, at) -> container.livePipeline.onSms(body, at, LiveSmsPipeline.Origin.LIVE) }
+                messages.forEach { (sender, body, at) -> container.livePipeline.onSms(body, at, LiveSmsPipeline.Origin.LIVE, sender) }
             } catch (e: Exception) {
                 AppLog.w({ "live sms failed" }, e)
             } finally {

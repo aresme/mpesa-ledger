@@ -92,8 +92,23 @@ fun DetailScreen(onBack: () -> Unit) {
                     Field("Type", kindLabel(tx.kind))
                     tx.timestamp?.let { Divider(); Field("Date", fullLabel(it)) }
                     tx.feeCents?.let { Divider(); Field("Fee", formatKsh(it)) }
-                    tx.balanceCents?.let { Divider(); Field("Balance after", formatKsh(it)) }
-                    tx.account?.let { Divider(); Field(if (tx.kind == "withdraw") "Agent number" else "Account", it) }
+                    tx.balanceCents?.let {
+                        Divider()
+                        Field(when (tx.kind) { "okoa" -> "Total Okoa debt"; "airtime_recharge" -> "Airtime balance"; else -> "Balance after" }, formatKsh(it))
+                    }
+                    tx.account?.let {
+                        Divider()
+                        Field(
+                            when (tx.kind) {
+                                "withdraw" -> "Agent number"
+                                "data_bundle" -> "Expires"
+                                "okoa" -> "Pay by"
+                                "bank_in" -> "Bank account"
+                                else -> "Account"
+                            },
+                            it.removePrefix("expires ").removePrefix("due "),
+                        )
+                    }
                     tx.phone?.let { Divider(); Field("Phone", it) }
                     Divider()
                     Field("Code", tx.code, mono = true)
@@ -126,11 +141,16 @@ private fun Header(tx: TransactionEntity) {
         Spacer(Modifier.height(4.dp))
         // Direction is spelled out below, so only money in carries a sign.
         HeroAmount(
-            (if (tx.direction == "in") "+" else "") + "Ksh ${formatCents(tx.amountCents)}",
+            if (tx.kind == "data_bundle") "Data bundle" else (if (tx.direction == "in") "+" else "") + "Ksh ${formatCents(tx.amountCents)}",
             color = if (tx.direction == "in") AresGreen else MaterialTheme.colorScheme.onSurface,
         )
         Text(
-            when (tx.direction) { "in" -> "Money in"; "out" -> "Money out"; else -> "Not counted in in/out totals" },
+            when {
+                tx.kind == "data_bundle" -> "Paid for through M-Pesa or airtime, so not counted again"
+                tx.direction == "in" -> "Money in"
+                tx.direction == "out" -> "Money out"
+                else -> "Not counted in in/out totals"
+            },
             style = MaterialTheme.typography.bodySmall, color = AresMuted,
         )
     }

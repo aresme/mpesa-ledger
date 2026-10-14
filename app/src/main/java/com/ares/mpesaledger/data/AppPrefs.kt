@@ -1,6 +1,7 @@
 package com.ares.mpesaledger.data
 
 import android.content.Context
+import com.ares.mpesaledger.parser.Source
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -43,7 +44,16 @@ class AppPrefs(context: Context) {
         get() = prefs.getStringSet(KEY_NOTIFIED_BILLS, emptySet())!!.toSet()
         set(value) = prefs.edit().putStringSet(KEY_NOTIFIED_BILLS, value).apply()
 
+    /** Other financial senders to read besides M-Pesa (Settings → Sources). All on by default. */
+    var enabledSources: Set<Source>
+        get() {
+            val off = prefs.getStringSet(KEY_SOURCES_OFF, emptySet())!!
+            return Source.entries.filter { it != Source.MPESA && it.key !in off }.toSet()
+        }
+        set(value) = prefs.edit().putStringSet(KEY_SOURCES_OFF, Source.entries.filter { it != Source.MPESA && it !in value }.map { it.key }.toSet()).apply()
+
     private companion object {
+        const val KEY_SOURCES_OFF = "sources_off"
         const val KEY_BILL_REMINDERS = "bill_reminders"
         const val KEY_HIDDEN_BILLS = "hidden_bills"
         const val KEY_NOTIFIED_BILLS = "notified_bills"

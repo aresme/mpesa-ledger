@@ -16,7 +16,7 @@ import com.ares.mpesaledger.domain.DefaultRules
         BudgetEntity::class,
         ImportStateEntity::class,
     ],
-    version = 2,
+    version = 3,
     exportSchema = true,
 )
 abstract class AppDatabase : RoomDatabase() {
@@ -37,7 +37,7 @@ abstract class AppDatabase : RoomDatabase() {
          * against the exported JSON in app/schemas/. There is deliberately no destructive
          * fallback: a missing migration must crash in testing, not wipe someone's ledger.
          */
-        val MIGRATIONS: Array<Migration> = arrayOf(MIGRATION_1_2)
+        val MIGRATIONS: Array<Migration> = arrayOf(MIGRATION_1_2, MIGRATION_2_3)
 
         fun build(context: Context, name: String): AppDatabase =
             Room.databaseBuilder(context, AppDatabase::class.java, name)
@@ -56,6 +56,22 @@ abstract class AppDatabase : RoomDatabase() {
 val MIGRATION_1_2 = object : Migration(1, 2) {
     override fun migrate(db: SupportSQLiteDatabase) {
         db.execSQL("ALTER TABLE import_state ADD COLUMN parserVersion INTEGER NOT NULL DEFAULT 0")
+    }
+}
+
+/**
+ * v3 (data only): built-in rules added after v1 (data bundles, airtime, GlobalPay). New installs
+ * get them from the seed; existing ones get them here. INSERT OR IGNORE respects the unique
+ * (keyword, isUser) index, so a user's own rule with the same keyword is untouched.
+ */
+val MIGRATION_2_3 = object : Migration(2, 3) {
+    override fun migrate(db: SupportSQLiteDatabase) {
+        listOf(
+            "SAFARICOM DATA BUNDLES" to "Data bundles", "SAFARICOM OFFERS" to "Data bundles",
+            "SAFARICOM POSTPAID BUNDLES" to "Data bundles", "MAWINGU AIRTIME" to "Airtime", "GLOBALPAY" to "Online payments",
+        ).forEach { (k, c) ->
+            db.execSQL("INSERT OR IGNORE INTO category_rules (keyword, category, isUser) VALUES (?, ?, 0)", arrayOf<Any>(k, c))
+        }
     }
 }
 

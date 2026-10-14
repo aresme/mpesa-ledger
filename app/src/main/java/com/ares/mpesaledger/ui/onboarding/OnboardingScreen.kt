@@ -65,7 +65,7 @@ fun OnboardingScreen(onDone: () -> Unit) {
             "M-Pesa Ledger turns your M-Pesa confirmation messages into a clear monthly picture: what came in, what went out, fees, Fuliza and where your money goes.",
             style = MaterialTheme.typography.bodyLarge, color = AresMuted,
         )
-        Point(AppIcons.Sms, "Only M-Pesa messages", "It reads SMS from MPESA and ignores everything else.")
+        Point(AppIcons.Sms, "Only money messages", "It reads M-Pesa and a few financial senders (GlobalPay, Safaricom bundles, Okoa, KCB, Ziidi). You can switch each one off. Everything else is ignored.")
         Point(Icons.Filled.Lock, "Stays on this phone", "No internet permission, no accounts, no analytics. Nothing is uploaded.")
         Point(Icons.Filled.Check, "Read-only", "It never sends, deletes or changes your messages.")
         Spacer(Modifier.weight(1f, fill = false))

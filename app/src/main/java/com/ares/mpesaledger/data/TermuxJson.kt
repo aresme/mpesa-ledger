@@ -1,6 +1,7 @@
 package com.ares.mpesaledger.data
 
 import com.ares.mpesaledger.parser.RawSms
+import com.ares.mpesaledger.parser.Source
 import org.json.JSONArray
 
 /**
@@ -15,8 +16,10 @@ object TermuxJson {
             val obj = array.optJSONObject(i) ?: return@mapNotNull null
             val sender = listOf("number", "sender", "address")
                 .map { obj.optString(it, "") }.firstOrNull { it.isNotEmpty() }.orEmpty()
-            if (sender.isNotEmpty() && "MPESA" !in sender.uppercase().replace("-", "")) return@mapNotNull null
-            obj.optString("body", "").takeIf { it.isNotBlank() }?.let { RawSms(it) }
+            // Blank sender = assume M-Pesa (prototype behaviour); known financial senders keep their name.
+            val known = Source.of(sender)
+            if (sender.isNotEmpty() && known == null && "MPESA" !in sender.uppercase().replace("-", "")) return@mapNotNull null
+            obj.optString("body", "").takeIf { it.isNotBlank() }?.let { RawSms(it, sender = sender.takeIf { known != null }) }
         }
     }
 }

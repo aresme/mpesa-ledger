@@ -9,7 +9,8 @@ import com.ares.mpesaledger.sms.LiveSmsPipeline
 import kotlinx.coroutines.launch
 
 /**
- * Debug-only stand-in for SMS_RECEIVED: `--es body "<sms>"` (optional `--el at <epochMillis>`)
+ * Debug-only stand-in for SMS_RECEIVED: `--es body "<sms>"` (optional `--el at <epochMillis>`,
+ * `--es sender <name>`, default MPESA)
  * goes through exactly the same LiveSmsPipeline as a real message.
  */
 class DebugSmsReceiver : BroadcastReceiver() {
@@ -20,11 +21,12 @@ class DebugSmsReceiver : BroadcastReceiver() {
             return
         }
         val at = intent.getLongExtra("at", System.currentTimeMillis())
+        val sender = intent.getStringExtra("sender") ?: "MPESA"
         val container = (context.applicationContext as MpesaLedgerApp).container
         val pending = goAsync()
         container.appScope.launch {
             try {
-                container.livePipeline.onSms(body, at, LiveSmsPipeline.Origin.DEBUG)
+                container.livePipeline.onSms(body, at, LiveSmsPipeline.Origin.DEBUG, sender)
             } catch (e: Exception) {
                 AppLog.w({ "debug sms failed" }, e)
             } finally {

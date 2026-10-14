@@ -6,6 +6,7 @@
 # Usage: scripts/discover-senders.sh [sender ...]      (defaults to the list below)
 set -euo pipefail
 source "$(dirname "$0")/_adb.sh" ""
+# DISCOVER_MAX (default 4) shapes per sender; DISCOVER_GREP keeps only shapes matching a regex.
 senders=("$@")
 [[ ${#senders[@]} -gt 0 ]] || senders=(Globalpay INTERNET SAF_Balance "Okoa Jahazi" TOP-UP ETOPUP ME2U BUY_CREDIT KCB ZIIDI Safaricom SAFARICOM)
 
@@ -18,6 +19,8 @@ TOKEN = re.compile(r"(?P<amount>\d[\d,]*\.\d{1,2})|(?P<date>\d{1,2}/\d{1,2}/\d{2
                    r"|(?P<num>[\d*]{3,})|(?P<word>(?<![\w-])[A-Z][A-Z'&.-]+(?![\w-]))")
 def mask(t):
     t = re.sub(r"^\s*[A-Z0-9]{10}(?=\s)", "QXX0000000", t)
+    # M-Pesa transaction codes anywhere in the text (e.g. "M-PESA Ref UHHQ22FJL2").
+    t = re.sub(r"(?<![A-Za-z0-9])(?=[A-Z0-9]{10}(?![A-Za-z0-9]))(?=[A-Z0-9]*\d)(?=[A-Z0-9]*[A-Z])[A-Z0-9]{10}", "QXX0000000", t)
     def sub(m):
         g, v = m.lastgroup, m.group()
         if g == "amount": return re.sub(r"\d", "9", v)
@@ -34,6 +37,9 @@ for s in senders:
         m = mask(b)
         shapes.setdefault(re.sub(r"[9#]+", "9", m)[:70], m)
     print(f"===== {s}: {len(bodies)} messages, {len(shapes)} different shapes")
-    for m in list(shapes.values())[:4]:
+    import os
+    flt = os.environ.get("DISCOVER_GREP")
+    picked = [m for m in shapes.values() if not flt or re.search(flt, m, re.I)]
+    for m in picked[:int(os.environ.get("DISCOVER_MAX", "4"))]:
         print("  -", m[:300])
 PY

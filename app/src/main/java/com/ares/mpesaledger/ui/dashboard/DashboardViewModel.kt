@@ -10,6 +10,7 @@ import com.ares.mpesaledger.data.LedgerCounts
 import com.ares.mpesaledger.data.RecipientTotal
 import com.ares.mpesaledger.domain.Bill
 import com.ares.mpesaledger.domain.FulizaSummary
+import com.ares.mpesaledger.domain.OkoaSummary
 import com.ares.mpesaledger.domain.MonthSummary
 import com.ares.mpesaledger.domain.MonthTotals
 import com.ares.mpesaledger.ui.components.TrendPoint
@@ -40,6 +41,7 @@ data class DashboardState(
     val fuliza: FulizaSummary? = null,
     /** Bills needing attention (overdue / due soon / upcoming), hidden ones removed. */
     val bills: List<Bill> = emptyList(),
+    val okoa: OkoaSummary? = null,
 ) {
     val loaded: Boolean get() = counts != null && totals != null
     val ledgerEmpty: Boolean get() = counts?.transactions == 0
@@ -83,6 +85,7 @@ class DashboardViewModel(private val container: AppContainer) : ViewModel() {
             )
         }
     }.combine(repo.observeFuliza()) { state, fuliza -> state.copy(fuliza = fuliza) }
+        .combine(repo.observeOkoa()) { state, okoa -> state.copy(okoa = okoa) }
         .combine(combine(repo.observeBills(), container.prefs.hiddenBills) { b, h -> b.filter { it.key !in h } }) { state, bills ->
             state.copy(bills = bills)
         }

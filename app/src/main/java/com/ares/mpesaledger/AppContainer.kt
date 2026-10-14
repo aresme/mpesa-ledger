@@ -29,9 +29,10 @@ class AppContainer(val appContext: Context) {
     val database: AppDatabase = AppDatabase.build(appContext, databaseName)
 
     val prefs = AppPrefs(appContext)
-    val importer = LedgerImporter(database)
     val repository = LedgerRepository(database)
-    val inboxSync = InboxSync(appContext, importer, InboxReader(appContext.contentResolver), isDemo)
+    // A parser upgrade can bring new default rules (DB migration) -> re-apply rules once.
+    val importer = LedgerImporter(database) { repository.recategorizeAll() }
+    val inboxSync = InboxSync(appContext, importer, InboxReader(appContext.contentResolver) { prefs.enabledSources }, isDemo)
     val budgetChecker = BudgetChecker(appContext, database)
     val billReminder = BillReminder(appContext, repository, prefs)
     val livePipeline = LiveSmsPipeline(this)
