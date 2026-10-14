@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Platform theme (no AppCompat dependency); Compose draws everything.
+         Black window background avoids a white flash before the first frame. -->
+    <style name="Theme.MpesaLedger" parent="android:Theme.Material.NoActionBar">
+        <item name="android:windowBackground">@color/ares_black</item>
+        <item name="android:colorBackground">@color/ares_black</item>
+        <item name="android:colorAccent">@color/ares_green</item>
+        <item name="android:statusBarColor">@color/ares_black</item>
+        <item name="android:navigationBarColor">@color/ares_black</item>
+    </style>
+</resources>
