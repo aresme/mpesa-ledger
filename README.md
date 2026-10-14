@@ -4,7 +4,8 @@ An offline Android app that turns your M-Pesa confirmation SMS into a monthly le
 Fuliza, savings, spending by category, top recipients, a 12-month trend and per-category budgets with alerts.
 
 **Everything stays on the phone.** The app has no `INTERNET` permission, no Google Play Services, no analytics and
-no accounts. It only reads SMS from `MPESA`, and it never sends, deletes or changes a message.
+no accounts. It reads SMS from `MPESA` plus the financial senders you switch on under *Settings → Sources*
+(GlobalPay, Safaricom, Okoa Jahazi, KCB, Ziidi, e-top-up), and it never sends, deletes or changes a message.
 
 <p>
 <img src="docs/screenshots/dashboard.png" width="200" alt="Dashboard">
@@ -35,6 +36,13 @@ no accounts. It only reads SMS from `MPESA`, and it never sends, deletes or chan
 - **Categories**: editable keyword rules (yours win over the built-ins, longer keywords win), per-transaction
   overrides that survive "Recategorize all", and "Always categorize *NAME* as …".
 - **Budgets**: monthly limit per category, with one notification at 80% and one at 100% per month.
+- **Other financial senders** (Settings → Sources, each switchable), built from real messages:
+  - **M-PESA GlobalPay** card payments: counted as money out (no M-Pesa SMS exists for them), forex charge as the fee.
+  - **Safaricom** data bundles (name and expiry) and airtime recharges: shown, but *not* counted again, because the
+    money is already in the M-Pesa or airtime record (e.g. "SAFARICOM DATA BUNDLES" pay bill → *Data bundles* category).
+  - **Okoa Jahazi**: airtime borrowed on credit and repaid, with an "owed / pay by" card.
+  - **KCB** money received, **Ziidi** withdrawals, **e-top-up** airtime received: shown, kept out of M-Pesa totals.
+  - Adverts and notices from these senders are ignored. Airtel and betting senders are not read.
 - **Fuliza tracker**: how much you owe and when it's due (read from Safaricom's own loan SMS), your Fuliza limit,
   access fees this month and this year, and the full loan/repayment history.
 - **Bills**: payments to the same place in at least 3 of the last 6 months (usually once or twice a month) become
@@ -173,7 +181,9 @@ through `AppLog`, which does nothing in release.
 
 ## Privacy notes
 
-- Permissions: `READ_SMS`, `RECEIVE_SMS`, `POST_NOTIFICATIONS`, plus the biometric permissions for the app lock.
+- Permissions: `READ_SMS`, `RECEIVE_SMS`, `POST_NOTIFICATIONS`, `RECEIVE_BOOT_COMPLETED` (re-arms bill reminders),
+  plus the biometric permissions for the app lock.
+- Only M-Pesa and the senders enabled under *Sources* are read; every other SMS is ignored.
   No `INTERNET`.
 - Backups are disabled (`allowBackup=false` plus data-extraction rules), so the ledger isn't copied to the cloud
   or to a new phone.

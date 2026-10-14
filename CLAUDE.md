@@ -53,6 +53,10 @@ JetBrains Mono only for amounts/codes where tabular alignment helps. No `>` prom
   - `MpesaParser.kt`: all regexes + the ordered `patterns` list. `Model.kt`: `Kind`, `Direction`, `ParsedTransaction`, `ParseResult`. `SmsText.kt`: blank-line splitter.
   - Parser v3 (2026-10-14): M-Shwari/KCB savings in/out added from documented wording (not yet seen on the phone).
     Reversals and M-Shwari loans intentionally unparsed until a real masked example exists.
+  - Parser v4 (2026-10-15): other senders in `OtherSmsParser` + `Source` (GlobalPay counts as OUT; Safaricom bundles/recharges,
+    Okoa, KCB, Ziidi, e-top-up are NONE to avoid double counting). Patterns come from the user's masked real SMS via
+    `scripts/discover-senders.sh` (user ran it/allowed it). Code-less messages get a synthetic code "S"+sha1(sender|text|date).
+    DB v3 migration = new default rules (data only); a parser upgrade rescan then calls recategorizeAll().
   - New SMS format = new `Kind` (if needed) + pattern at the right priority + a test in `EdgeCaseTest` with a masked/synthetic message. Never guess unknown formats: they go to Unparsed.
 - `data/` — Room entities, DAOs, migrations (schemas exported to `app/schemas/`), repository.
 - `sms/` — inbox reader + `InboxSync` (source of truth, runs on every resume), `SmsReceiver` (live, BROADCAST_SMS-guarded),
