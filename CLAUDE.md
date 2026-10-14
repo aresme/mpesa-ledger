@@ -18,7 +18,10 @@ Device scripts take an optional serial (or set `ANDROID_SERIAL`); with more than
 ```bash
 scripts/install.sh [serial]          # assembleDebug + install -r + launch
 scripts/logs.sh [serial]             # logcat -c, then tag MpesaLedger + AndroidRuntime:E
-scripts/shot.sh <name> [serial]      # screenshots/<name>.png + .xml (git-ignored)
+scripts/shot.sh <name> [serial]      # screenshots/<name>.png + .xml (git-ignored); REFUSES unless demo mode is on
+scripts/androidtest.sh [serial]      # on-device Room tests; keeps the app installed (AGP would uninstall it)
+scripts/unparsed.sh --counts         # table counts only (safe for Claude to run)
+scripts/unparsed.sh                  # prints raw unparsed SMS: for the USER to run and mask, not Claude
 scripts/sim-sms.sh "<body>" [serial] # Phase 4: debug SMS broadcast
 ./gradlew :app:testDebugUnitTest     # JVM unit tests: fixture (§5.6), edge cases, categorizer
 # fixture lives in app/src/test/resources/sample_sms.txt (and app/src/debug/assets/ for demo mode)
@@ -26,6 +29,12 @@ scripts/sim-sms.sh "<body>" [serial] # Phase 4: debug SMS broadcast
 adb shell pm clear com.ares.mpesaledger
 ```
 The scripts use the SDK adb (`~/Android/Sdk/platform-tools/adb`), not Ubuntu's older `/usr/bin/adb`.
+
+## Demo mode / real data
+- Toggle: the "Demo mode"/"Exit demo" button (debug builds); it persists `shared_prefs/devtools.xml` and restarts the process.
+- Real data (`mpesa.db`) must never be screenshotted, UI-dumped, or have its SMS text read by Claude. Counts and timings only.
+- Inbox sync is skipped entirely in demo mode, so real SMS never enter `mpesa_demo.db`.
+- XOS drops Log.d system-wide (`persist.log.tag=I`), so AppLog logs at INFO (debug builds only).
 
 ## Layout (`app/src/main/java/com/ares/mpesaledger/`)
 - `parser/` — pure Kotlin, **zero Android imports**. Port of `mpesa_ledger.py` (kept at repo root as the reference); spec §5.
