@@ -15,6 +15,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Info
+import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.Card
@@ -93,6 +94,17 @@ fun SettingsScreen(
                 }
             }
             item { ImportStatus(state) }
+            item {
+                Group("Notifications") {
+                    ListRow(
+                        title = "New transactions",
+                        subtitle = "A short notification for each M-Pesa SMS as it arrives. Budget alerts are always on.",
+                        icon = Icons.Filled.Notifications,
+                        onClick = { vm.setNotifyTransactions(!state.notifyTransactions) },
+                        trailing = { Switch(checked = state.notifyTransactions, onCheckedChange = vm::setNotifyTransactions) },
+                    )
+                }
+            }
             if (!state.isDemo) {
                 item {
                     Group("Background updates") {

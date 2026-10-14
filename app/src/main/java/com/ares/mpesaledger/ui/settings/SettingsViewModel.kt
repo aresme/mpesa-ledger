@@ -19,18 +19,20 @@ data class SettingsState(
     val hasSmsPermission: Boolean = false,
     val isDemo: Boolean = false,
     val databaseName: String = "",
+    val notifyTransactions: Boolean = false,
 )
 
 class SettingsViewModel(private val container: AppContainer) : ViewModel() {
     private val permission = MutableStateFlow(container.inboxSync.hasPermission())
+    private val notifyTransactions = MutableStateFlow(container.prefs.notifyTransactions)
 
     val state: StateFlow<SettingsState> = combine(
         container.repository.observeCounts(),
         container.importer.progress,
         container.importer.lastResult,
-        permission,
-    ) { counts, progress, last, perm ->
-        SettingsState(counts, progress, last, perm, container.isDemo, container.databaseName)
+        combine(permission, notifyTransactions) { p, n -> p to n },
+    ) { counts, progress, last, (perm, notify) ->
+        SettingsState(counts, progress, last, perm, container.isDemo, container.databaseName, notify)
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), SettingsState(isDemo = container.isDemo))
 
     fun refreshPermission() { permission.value = container.inboxSync.hasPermission() }
@@ -38,6 +40,11 @@ class SettingsViewModel(private val container: AppContainer) : ViewModel() {
     fun onPermissionResult(granted: Boolean) {
         refreshPermission()
         if (granted) container.syncInboxInBackground()
+    }
+
+    fun setNotifyTransactions(on: Boolean) {
+        container.prefs.notifyTransactions = on
+        notifyTransactions.value = on
     }
 
     fun reimportEverything() = container.syncInboxInBackground(full = true)

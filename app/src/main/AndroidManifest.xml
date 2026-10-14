@@ -27,6 +27,16 @@
         android:theme="@style/Theme.MpesaLedger"
         tools:targetApi="37">
 
+        <!-- Live M-Pesa SMS. BROADCAST_SMS means only the telephony stack can deliver this. -->
+        <receiver
+            android:name=".sms.SmsReceiver"
+            android:exported="true"
+            android:permission="android.permission.BROADCAST_SMS">
+            <intent-filter>
+                <action android:name="android.provider.Telephony.SMS_RECEIVED" />
+            </intent-filter>
+        </receiver>
+
         <activity
             android:name=".MainActivity"
             android:exported="true">

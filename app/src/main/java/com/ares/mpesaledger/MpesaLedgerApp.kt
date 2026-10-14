@@ -1,6 +1,7 @@
 package com.ares.mpesaledger
 
 import android.app.Application
+import com.ares.mpesaledger.notify.Notifications
 
 class MpesaLedgerApp : Application() {
     lateinit var container: AppContainer
@@ -9,6 +10,7 @@ class MpesaLedgerApp : Application() {
     override fun onCreate() {
         super.onCreate()
         container = AppContainer(this)
+        Notifications.createChannels(this)
         AppLog.d { "app started (debug=${BuildConfig.DEBUG}, sdk=${android.os.Build.VERSION.SDK_INT})" }
     }
 }

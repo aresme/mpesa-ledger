@@ -24,7 +24,7 @@ scripts/demo.sh on|off|reset|empty   # flip demo mode without touching the UI (r
 scripts/unparsed.sh --counts         # table counts only (safe for Claude to run)
 scripts/unparsed.sh --masked         # unparsed SMS with names/digits/codes masked (safe for Claude to read)
 scripts/unparsed.sh                  # prints raw unparsed SMS: for the USER to run and mask, not Claude
-scripts/sim-sms.sh "<body>" [serial] # Phase 4: debug SMS broadcast
+scripts/sim-sms.sh "<body>" [serial] # simulated incoming SMS -> same LiveSmsPipeline as a real one (debug builds)
 ./gradlew :app:testDebugUnitTest     # JVM unit tests: fixture (§5.6), edge cases, categorizer
 # fixture lives in app/src/test/resources/sample_sms.txt (and app/src/debug/assets/ for demo mode)
 # test/.../parser/FakeLedger.kt defines the dedupe / Fuliza-inheritance / month-total semantics the Room DAO must match
@@ -49,8 +49,14 @@ JetBrains Mono only for amounts/codes where tabular alignment helps. No `>` prom
   - `MpesaParser.kt`: all regexes + the ordered `patterns` list. `Model.kt`: `Kind`, `Direction`, `ParsedTransaction`, `ParseResult`. `SmsText.kt`: blank-line splitter.
   - New SMS format = new `Kind` (if needed) + pattern at the right priority + a test in `EdgeCaseTest` with a masked/synthetic message. Never guess unknown formats: they go to Unparsed.
 - `data/` — Room entities, DAOs, migrations (schemas exported to `app/schemas/`), repository.
-- `sms/` — inbox reader, live `SMS_RECEIVED` receiver.
-- `domain/` — pure Kotlin too: `Categorizer` + `DefaultRules`, `MonthTotals`, later budget checker.
+- `sms/` — inbox reader + `InboxSync` (source of truth, runs on every resume), `SmsReceiver` (live, BROADCAST_SMS-guarded),
+  `LiveSmsPipeline` (shared by the real and debug receivers; ignores real SMS in demo mode).
+- `notify/` — notification channels ("Budgets", "Transactions" opt-in); content hidden on the lock screen.
+- Debug receiver `debug/DebugSmsReceiver` is guarded by `android.permission.DUMP` (adb shell has it; apps don't).
+- Kill the app for a cold-start test with `adb shell run-as com.ares.mpesaledger kill -9 <pid>`; `am force-stop` puts it in
+  the stopped state where no broadcast is delivered (that's also what XOS does, hence the inbox catch-up).
+- `domain/` — `Categorizer` + `DefaultRules`, `MonthTotals`, `BudgetRules` (pure, unit-tested) and `BudgetChecker`
+  (Android: reads Room, posts notifications). SQL must stay compatible with API 24's SQLite 3.9 (no UPSERT, no window functions).
 - `ui/` — `theme/` (tokens, Inter + tabular `Num` styles, `Mono` for codes/raw SMS), `components/` (cards, top bar with
   DEMO badge, charts, icons), `navigation/` (string routes, bottom bar), one package per screen with its ViewModel
   (`dashboard`, `transactions`, `detail`, `budgets`, `settings`, `unparsed`, `onboarding`). `appViewModel { container, saved -> }` = manual DI.

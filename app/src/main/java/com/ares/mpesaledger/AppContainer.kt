@@ -6,8 +6,10 @@ import com.ares.mpesaledger.data.AppPrefs
 import com.ares.mpesaledger.data.LedgerImporter
 import com.ares.mpesaledger.data.LedgerRepository
 import com.ares.mpesaledger.devtools.DevTools
+import com.ares.mpesaledger.domain.BudgetChecker
 import com.ares.mpesaledger.sms.InboxReader
 import com.ares.mpesaledger.sms.InboxSync
+import com.ares.mpesaledger.sms.LiveSmsPipeline
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -29,12 +31,18 @@ class AppContainer(val appContext: Context) {
     val importer = LedgerImporter(database)
     val repository = LedgerRepository(database)
     val inboxSync = InboxSync(appContext, importer, InboxReader(appContext.contentResolver), isDemo)
+    val budgetChecker = BudgetChecker(appContext, database)
+    val livePipeline = LiveSmsPipeline(this)
 
     init {
         if (isDemo) appScope.launch { DevTools.seedDemoIfEmpty(appContext, database, importer) }
     }
 
     fun syncInboxInBackground(full: Boolean = false) {
-        appScope.launch { inboxSync.sync(full) }
+        appScope.launch {
+            val result = inboxSync.sync(full)
+            // Messages the receiver missed (app killed) still trigger budget alerts on catch-up.
+            if (result != null && result.inserted > 0) budgetChecker.check()
+        }
     }
 }
