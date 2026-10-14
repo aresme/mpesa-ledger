@@ -14,6 +14,13 @@ if [[ "${ALLOW_REAL:-}" != "1" ]]; then
         echo "Refusing: app is not in DEMO mode (real data could be on screen)." >&2
         exit 3
     fi
+    # Demo mode isn't enough: a system file picker or another app on top would show the
+    # user's own files. Only shoot when this app's activity is the one in front.
+    top=$(adb_ shell dumpsys activity activities | grep -m1 topResumedActivity || true)
+    if [[ "$top" != *"$PKG/"* ]]; then
+        echo "Refusing: $PKG is not in the foreground." >&2
+        exit 4
+    fi
 fi
 
 mkdir -p screenshots
