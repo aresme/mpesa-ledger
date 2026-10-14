@@ -20,16 +20,20 @@ scripts/install.sh [serial]          # assembleDebug + install -r + launch
 scripts/logs.sh [serial]             # logcat -c, then tag MpesaLedger + AndroidRuntime:E
 scripts/shot.sh <name> [serial]      # screenshots/<name>.png + .xml (git-ignored)
 scripts/sim-sms.sh "<body>" [serial] # Phase 4: debug SMS broadcast
-./gradlew :app:testDebugUnitTest     # JVM unit tests (parser)
+./gradlew :app:testDebugUnitTest     # JVM unit tests: fixture (§5.6), edge cases, categorizer
+# fixture lives in app/src/test/resources/sample_sms.txt (and app/src/debug/assets/ for demo mode)
+# test/.../parser/FakeLedger.kt defines the dedupe / Fuliza-inheritance / month-total semantics the Room DAO must match
 adb shell pm clear com.ares.mpesaledger
 ```
 The scripts use the SDK adb (`~/Android/Sdk/platform-tools/adb`), not Ubuntu's older `/usr/bin/adb`.
 
 ## Layout (`app/src/main/java/com/ares/mpesaledger/`)
-- `parser/` — pure Kotlin, **zero Android imports**. Port of `mpesa_ledger.py`; spec §5. Add new SMS patterns here plus a test.
+- `parser/` — pure Kotlin, **zero Android imports**. Port of `mpesa_ledger.py` (kept at repo root as the reference); spec §5.
+  - `MpesaParser.kt`: all regexes + the ordered `patterns` list. `Model.kt`: `Kind`, `Direction`, `ParsedTransaction`, `ParseResult`. `SmsText.kt`: blank-line splitter.
+  - New SMS format = new `Kind` (if needed) + pattern at the right priority + a test in `EdgeCaseTest` with a masked/synthetic message. Never guess unknown formats: they go to Unparsed.
 - `data/` — Room entities, DAOs, migrations (schemas exported to `app/schemas/`), repository.
 - `sms/` — inbox reader, live `SMS_RECEIVED` receiver.
-- `domain/` — categorizer, budget checker, aggregates.
+- `domain/` — pure Kotlin too: `Categorizer` + `DefaultRules`, `MonthTotals`, later budget checker.
 - `ui/` — theme (`ui/theme`), screens, components, ViewModels.
 - `app/src/debug/` — debug-only receiver (`DEBUG_SMS`), demo mode (`mpesa_demo.db` from `sample_sms.txt`).
 - `AppContainer` (manual DI) is owned by `MpesaLedgerApp`.
