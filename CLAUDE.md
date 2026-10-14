@@ -88,4 +88,4 @@ JetBrains Mono only for amounts/codes where tabular alignment helps. No `>` prom
 
 ## Devices
 - Daily: Infinix X6886, Android 16 / API 36, arm64-v8a, 1080×2400 @420dpi, XOS (aggressive background killing; "Restricted settings" likely for SMS permissions).
-- Secondary: Infinix X559, Android 7.0 / API 24, armeabi-v7a, no GMS.
+- The X6886 is the ONLY test device (decided 2026-10-14). minSdk stays 24, so keep API-24-safe code (SQLite 3.9, desugared java.time), but there is no Android 7 phone to verify on; use the `wm size`/`wm density` simulation for small screens.
