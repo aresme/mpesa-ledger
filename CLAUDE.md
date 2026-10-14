@@ -1,7 +1,9 @@
 # M-Pesa Ledger — working notes
 
 Offline Android app (Kotlin, Compose M3, Room/KSP, manual DI) that parses M-Pesa SMS into a local ledger.
-Package: `com.ares.mpesaledger`. minSdk 24, compile/target 37. The full spec was given in the first session; phases and checkpoints follow it.
+Packages: release `com.ares.mpesaledger`; debug `com.ares.mpesaledger.debug` ("M-Pesa Ledger dev", so both install side by side
+with different keys). Source namespace is always `com.ares.mpesaledger`, so components are `<pkg>/com.ares.mpesaledger.MainActivity`.
+minSdk 24, compile/target 37. The full spec was given in the first session; phases and checkpoints follow it. README.md is user-facing.
 
 ## Hard rules
 - **No `INTERNET` permission, no GMS/Firebase, no downloadable fonts.** Fonts are bundled in `app/src/main/res/font` (OFL licenses in `app/src/main/assets/licenses/`).
@@ -28,8 +30,10 @@ scripts/sim-sms.sh "<body>" [serial] # simulated incoming SMS -> same LiveSmsPip
 ./gradlew :app:testDebugUnitTest     # JVM unit tests: fixture (§5.6), edge cases, categorizer
 # fixture lives in app/src/test/resources/sample_sms.txt (and app/src/debug/assets/ for demo mode)
 # test/.../parser/FakeLedger.kt defines the dedupe / Fuliza-inheritance / month-total semantics the Room DAO must match
-adb shell pm clear com.ares.mpesaledger
+scripts/perf.sh [count]              # synthetic N-SMS import + query timings (demo DB only)
+./gradlew :app:assembleRelease       # R8; signed only if MPESA_KEYSTORE* are in ~/.gradle/gradle.properties or env
 ```
+`pm clear` / uninstall wipes the ledger: check `scripts/unparsed.sh --counts` and ask first.
 The scripts use the SDK adb (`~/Android/Sdk/platform-tools/adb`), not Ubuntu's older `/usr/bin/adb`.
 
 ## Visual direction (decided at checkpoint 2)
