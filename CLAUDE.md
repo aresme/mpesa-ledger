@@ -31,7 +31,7 @@ scripts/sim-sms.sh "<body>" [serial] # simulated incoming SMS -> same LiveSmsPip
 # fixture lives in app/src/test/resources/sample_sms.txt (and app/src/debug/assets/ for demo mode)
 # test/.../parser/FakeLedger.kt defines the dedupe / Fuliza-inheritance / month-total semantics the Room DAO must match
 scripts/perf.sh [count]              # synthetic N-SMS import + query timings (demo DB only)
-./gradlew :app:assembleRelease       # R8; signed only if MPESA_KEYSTORE* are in ~/.gradle/gradle.properties or env
+./gradlew :app:assembleRelease       # R8, signed with ~/keys/mpesa-ledger.jks via MPESA_* in ~/.gradle/gradle.properties (never print the password)
 ```
 `pm clear` / uninstall wipes the ledger: check `scripts/unparsed.sh --counts` and ask first.
 The scripts use the SDK adb (`~/Android/Sdk/platform-tools/adb`), not Ubuntu's older `/usr/bin/adb`.
@@ -80,6 +80,11 @@ JetBrains Mono only for amounts/codes where tabular alignment helps. No `>` prom
 - uiautomator text match: button labels may carry leading spaces ("  Add rule"); match on contains, not equals.
 - Never drive the SAF file picker with dumps/screenshots: it lists the user's own files.
 - READ_SMS and RECEIVE_SMS share a permission group: revoking one while the other is granted means the next request is auto-granted.
+
+## Installed on the X6886
+- `com.ares.mpesaledger` = signed release = the user's real app. Never uninstall/`pm clear` it.
+- `com.ares.mpesaledger.debug` = dev build, normally left in DEMO mode (it then ignores real SMS, so no duplicate alerts).
+- Never drive the system file picker with screenshots; `shot.sh` refuses unless the app itself is in front.
 
 ## Devices
 - Daily: Infinix X6886, Android 16 / API 36, arm64-v8a, 1080×2400 @420dpi, XOS (aggressive background killing; "Restricted settings" likely for SMS permissions).

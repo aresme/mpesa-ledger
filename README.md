@@ -137,7 +137,8 @@ Release builds use R8 (minify and resource shrinking). Signing settings are read
 `~/.gradle/gradle.properties` or environment variables, never from this repo.
 
 1. Create a keystore once (keep it and its passwords somewhere safe and backed up offline; if you lose it, you
-   can't update the installed app without uninstalling it, which deletes its data):
+   can't update the installed app without uninstalling it, which deletes its data). *On the development laptop this
+   is already done: `~/keys/mpesa-ledger.jks`, with its password in `~/.gradle/gradle.properties`, both `chmod 600`.*
    ```bash
    mkdir -p ~/keys
    keytool -genkeypair -v -keystore ~/keys/mpesa-ledger.jks -alias mpesaledger \
@@ -189,7 +190,7 @@ through `AppLog`, which does nothing in release.
 | Import 5,000 SMS (parse 1.2 s, insert 1.6 s) | 3.0 s, in the background with a progress bar |
 | Dashboard queries with 4,865 transactions | 8–45 ms each |
 | Full Activity list (4,865 rows) | 107 ms |
-| Cold start, release build | about 0.75 s |
+| Cold start, signed release build | 0.34–0.37 s (about 1 s on the very first launch) |
 
 ## Licences
 
