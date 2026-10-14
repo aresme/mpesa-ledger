@@ -2,7 +2,11 @@
 # Usage inside a script:  source "$(dirname "$0")/_adb.sh" "$1"   (optional serial)
 # Serial precedence: explicit argument > $ANDROID_SERIAL > the single connected device.
 
-PKG="com.ares.mpesaledger"
+# Scripts drive the DEBUG build (applicationIdSuffix ".debug"). Component class names keep the
+# source namespace, so they are spelled out in full rather than relative to the package.
+PKG="com.ares.mpesaledger.debug"
+NS="com.ares.mpesaledger"
+MAIN="$PKG/$NS.MainActivity"
 TAG="MpesaLedger"
 
 # Prefer the SDK's adb: Ubuntu's /usr/bin/adb is older, and mixing the two makes

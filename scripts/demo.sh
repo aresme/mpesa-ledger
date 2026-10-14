@@ -16,5 +16,5 @@ if [[ "$state" == reset || "$state" == empty ]]; then
     adb_ shell "run-as $PKG sh -c 'rm -f databases/mpesa_demo.db databases/mpesa_demo.db-wal databases/mpesa_demo.db-shm'"
 fi
 adb_ shell "run-as $PKG sh -c 'mkdir -p shared_prefs && printf \"%s\" \"<?xml version=\\\"1.0\\\" encoding=\\\"utf-8\\\" standalone=\\\"yes\\\" ?><map><boolean name=\\\"demo_mode\\\" value=\\\"$value\\\" /><boolean name=\\\"demo_empty\\\" value=\\\"$empty\\\" /></map>\" > shared_prefs/devtools.xml'"
-adb_ shell am start -n "$PKG/.MainActivity" >/dev/null
+adb_ shell am start -n "$MAIN" >/dev/null
 echo "demo mode $state"

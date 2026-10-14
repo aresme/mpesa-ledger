@@ -11,5 +11,5 @@ source "$(dirname "$0")/_adb.sh" "${2:-}"
 quoted="'${body//\'/\'\\\'\'}'"
 adb_ shell am broadcast \
     -a com.ares.mpesaledger.DEBUG_SMS \
-    -n "$PKG/.debug.DebugSmsReceiver" \
+    -n "$PKG/$NS.debug.DebugSmsReceiver" \
     --es body "$quoted" | tail -1

@@ -18,10 +18,32 @@ android {
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
+    // Release signing comes ONLY from ~/.gradle/gradle.properties or environment variables,
+    // never from the repo. Without them, assembleRelease produces an unsigned APK.
+    val keystore = providers.gradleProperty("MPESA_KEYSTORE").orElse(providers.environmentVariable("MPESA_KEYSTORE"))
+    fun secret(name: String) = providers.gradleProperty(name).orElse(providers.environmentVariable(name))
+    signingConfigs {
+        if (keystore.isPresent) {
+            create("release") {
+                storeFile = file(keystore.get())
+                storePassword = secret("MPESA_KEYSTORE_PASSWORD").get()
+                keyAlias = secret("MPESA_KEY_ALIAS").get()
+                keyPassword = secret("MPESA_KEY_PASSWORD").get()
+            }
+        }
+    }
+
     buildTypes {
+        debug {
+            // Separate package so a signed release and a debug build can live side by side
+            // (different keys can't replace each other, and uninstalling would wipe the ledger).
+            applicationIdSuffix = ".debug"
+        }
         release {
-            isMinifyEnabled = false
+            isMinifyEnabled = true
+            isShrinkResources = true
             proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
+            if (keystore.isPresent) signingConfig = signingConfigs.getByName("release")
         }
     }
 

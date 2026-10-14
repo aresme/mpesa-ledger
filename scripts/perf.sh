@@ -10,7 +10,7 @@ source scripts/_adb.sh "${2:-}"
 scripts/demo.sh reset "$SERIAL" >/dev/null
 sleep 3
 adb_ logcat -c
-adb_ shell am broadcast -a com.ares.mpesaledger.DEBUG_PERF -n "$PKG/.debug.PerfReceiver" --ei count "$count" >/dev/null
+adb_ shell am broadcast -a com.ares.mpesaledger.DEBUG_PERF -n "$PKG/$NS.debug.PerfReceiver" --ei count "$count" >/dev/null
 for _ in $(seq 1 120); do
     adb_ logcat -d -s "$TAG:V" | grep -q 'perf: dashboard' && break
     sleep 1
@@ -18,4 +18,4 @@ done
 adb_ logcat -d -s "$TAG:V" | grep -E 'perf' | sed 's/^.*perf: /  /'
 echo "Cold start with $count+ rows (am start -W):"
 adb_ shell am force-stop "$PKG"
-adb_ shell am start -W -n "$PKG/.MainActivity" | grep -E 'TotalTime|WaitTime' | sed 's/^/  /'
+adb_ shell am start -W -n "$MAIN" | grep -E 'TotalTime|WaitTime' | sed 's/^/  /'
