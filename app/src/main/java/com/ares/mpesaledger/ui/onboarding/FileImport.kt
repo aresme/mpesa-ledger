@@ -17,11 +17,12 @@ import kotlinx.coroutines.withContext
  * Framework, so it works without SMS permission. Runs in the app scope, not the screen's.
  */
 @Composable
-fun rememberFileImport(): () -> Unit {
+fun rememberFileImport(onFilePicked: () -> Unit = {}): () -> Unit {
     val container = appContainer()
     val context = LocalContext.current
     val launcher = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
         if (uri == null) return@rememberLauncherForActivityResult
+        onFilePicked()
         container.appScope.launch {
             val message = runCatching {
                 val messages = SmsFileReader.read(context.contentResolver, uri)

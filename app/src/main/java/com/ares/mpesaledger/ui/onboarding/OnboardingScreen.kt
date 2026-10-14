@@ -38,7 +38,12 @@ import com.ares.mpesaledger.ui.theme.AresMuted
 @Composable
 fun OnboardingScreen(onDone: () -> Unit) {
     val container = appContainer()
-    val importFile = rememberFileImport()
+    // Leave onboarding only after a file was picked: navigating first would dispose this
+    // screen's picker launcher and the picker would never open.
+    val importFile = rememberFileImport(onFilePicked = {
+        container.prefs.onboardingDone = true
+        onDone()
+    })
     val requestSms = rememberSmsPermissionRequest { granted ->
         if (granted) {
             container.prefs.onboardingDone = true
@@ -66,11 +71,7 @@ fun OnboardingScreen(onDone: () -> Unit) {
         Spacer(Modifier.weight(1f, fill = false))
         Button(onClick = requestSms, modifier = Modifier.fillMaxWidth().height(52.dp)) { Text("Allow SMS access") }
         TextButton(
-            onClick = {
-                container.prefs.onboardingDone = true
-                onDone()
-                importFile()
-            },
+            onClick = importFile,
             modifier = Modifier.fillMaxWidth(),
         ) { Text("Import from a file instead") }
     }
