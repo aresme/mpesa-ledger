@@ -28,6 +28,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.unit.dp
+import com.ares.mpesaledger.Brand
+import com.ares.mpesaledger.ui.about.BrandMark
 import com.ares.mpesaledger.ui.appContainer
 import com.ares.mpesaledger.ui.components.AppIcons
 import com.ares.mpesaledger.ui.theme.AresGreen
@@ -57,9 +59,7 @@ fun OnboardingScreen(onDone: () -> Unit) {
         verticalArrangement = Arrangement.spacedBy(20.dp),
     ) {
         Spacer(Modifier.height(24.dp))
-        Box(Modifier.size(72.dp).background(AresGreenContainer, CircleShape), contentAlignment = Alignment.Center) {
-            Icon(AppIcons.PieChart, contentDescription = null, tint = AresGreen, modifier = Modifier.size(36.dp))
-        }
+        BrandMark(72)
         Text("Your M-Pesa, organised", style = MaterialTheme.typography.headlineMedium)
         Text(
             "M-Pesa Ledger turns your M-Pesa confirmation messages into a clear monthly picture: what came in, what went out, fees, Fuliza and where your money goes.",
@@ -74,6 +74,10 @@ fun OnboardingScreen(onDone: () -> Unit) {
             onClick = importFile,
             modifier = Modifier.fillMaxWidth(),
         ) { Text("Import from a file instead") }
+        Text(
+            Brand.CREDIT, style = MaterialTheme.typography.labelMedium, color = AresMuted,
+            modifier = Modifier.fillMaxWidth(), textAlign = androidx.compose.ui.text.style.TextAlign.Center,
+        )
     }
 }
 

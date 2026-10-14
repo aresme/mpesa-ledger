@@ -39,7 +39,9 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.LifecycleResumeEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.ares.mpesaledger.Brand
 import com.ares.mpesaledger.BuildConfig
+import androidx.compose.ui.Alignment
 import com.ares.mpesaledger.MainActivity
 import com.ares.mpesaledger.ui.lock.AppLock
 import com.ares.mpesaledger.data.ImportResult
@@ -61,6 +63,9 @@ fun SettingsScreen(
     onOpenUnparsed: () -> Unit,
     onOpenRules: () -> Unit,
     onOpenSources: () -> Unit,
+    onOpenAbout: () -> Unit,
+    onOpenPrivacy: () -> Unit,
+    onOpenHelp: () -> Unit,
     demoToggleAvailable: Boolean,
     onToggleDemo: (Boolean) -> Unit,
 ) {
@@ -193,14 +198,18 @@ fun SettingsScreen(
                 }
             }
             item {
-                Group("About") {
-                    ListRow(
-                        title = "M-Pesa Ledger ${BuildConfig.VERSION_NAME}",
-                        subtitle = "100% offline. The app has no internet permission; your messages and ledger never leave this phone.",
-                        icon = Icons.Filled.Info,
-                    )
+                Group("Help & about") {
+                    ListRow(title = "Help & FAQ", icon = Icons.Filled.Info, onClick = onOpenHelp)
                     HorizontalDivider()
-                    ListRow(title = "Fonts", subtitle = "Inter and JetBrains Mono, SIL Open Font License 1.1")
+                    ListRow(title = "Privacy policy", subtitle = "100% offline · nothing leaves this phone", icon = Icons.Filled.Lock, onClick = onOpenPrivacy)
+                    HorizontalDivider()
+                    ListRow(title = "About", subtitle = "${Brand.APP_NAME} ${BuildConfig.VERSION_NAME}", icon = AppIcons.PieChart, onClick = onOpenAbout)
+                }
+            }
+            item {
+                Column(Modifier.fillMaxWidth().padding(top = 8.dp), horizontalAlignment = Alignment.CenterHorizontally) {
+                    Text(Brand.CREDIT, style = MaterialTheme.typography.labelLarge, color = AresMuted)
+                    Text("Version ${BuildConfig.VERSION_NAME}", style = MaterialTheme.typography.bodySmall, color = AresMuted)
                 }
             }
         }

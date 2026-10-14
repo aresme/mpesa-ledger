@@ -8,6 +8,7 @@ import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.layout.Box
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.fragment.app.FragmentActivity
 import com.ares.mpesaledger.devtools.DevTools
 import com.ares.mpesaledger.ui.lock.AppLock
@@ -23,6 +24,8 @@ class MainActivity : FragmentActivity() {
         private set
 
     override fun onCreate(savedInstanceState: Bundle?) {
+        // Branded launch screen; must run before super.onCreate (switches to the app theme after).
+        installSplashScreen()
         // Dark-only app: force light (white) system-bar icons regardless of the system theme.
         enableEdgeToEdge(
             statusBarStyle = SystemBarStyle.dark(android.graphics.Color.BLACK),

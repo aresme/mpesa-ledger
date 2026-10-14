@@ -6,6 +6,6 @@ cd "$(dirname "$0")/.."
 source scripts/_adb.sh "${1:-}"
 
 ./gradlew :app:assembleDebug
-adb_ install -r -d app/build/outputs/apk/debug/app-debug.apk
+adb_ install -r -d "$(ls -t app/build/outputs/apk/debug/*.apk | head -1)"
 adb_ shell am start -n "$MAIN"
 echo "Installed and launched on $SERIAL"

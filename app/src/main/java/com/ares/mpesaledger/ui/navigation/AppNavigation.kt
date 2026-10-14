@@ -31,6 +31,9 @@ import com.ares.mpesaledger.ui.dashboard.DashboardScreen
 import com.ares.mpesaledger.ui.detail.DetailScreen
 import com.ares.mpesaledger.ui.detail.DetailViewModel
 import com.ares.mpesaledger.ui.onboarding.OnboardingScreen
+import com.ares.mpesaledger.ui.about.AboutScreen
+import com.ares.mpesaledger.ui.about.HelpScreen
+import com.ares.mpesaledger.ui.about.PrivacyScreen
 import com.ares.mpesaledger.ui.bills.BillsScreen
 import com.ares.mpesaledger.ui.fuliza.FulizaScreen
 import com.ares.mpesaledger.ui.rules.RulesScreen
@@ -57,6 +60,9 @@ object Routes {
     const val FULIZA = "fuliza"
     const val BILLS = "bills"
     const val SOURCES = "sources"
+    const val ABOUT = "about"
+    const val PRIVACY = "privacy"
+    const val HELP = "help"
     private const val DETAIL = "detail"
 
     const val ACTIVITY_PATTERN =
@@ -128,6 +134,9 @@ fun AppNavigation(
                     onOpenUnparsed = { nav.navigate(Routes.UNPARSED) },
                     onOpenRules = { nav.navigate(Routes.RULES) },
                     onOpenSources = { nav.navigate(Routes.SOURCES) },
+                    onOpenAbout = { nav.navigate(Routes.ABOUT) },
+                    onOpenPrivacy = { nav.navigate(Routes.PRIVACY) },
+                    onOpenHelp = { nav.navigate(Routes.HELP) },
                     demoToggleAvailable = demoToggleAvailable,
                     onToggleDemo = onToggleDemo,
                 )
@@ -144,6 +153,11 @@ fun AppNavigation(
             composable(Routes.FULIZA) { FulizaScreen(onBack = { nav.popBackStack() }) }
             composable(Routes.BILLS) { BillsScreen(onBack = { nav.popBackStack() }) }
             composable(Routes.SOURCES) { SourcesScreen(onBack = { nav.popBackStack() }) }
+            composable(Routes.ABOUT) {
+                AboutScreen(onBack = { nav.popBackStack() }, onOpenPrivacy = { nav.navigate(Routes.PRIVACY) }, onOpenHelp = { nav.navigate(Routes.HELP) })
+            }
+            composable(Routes.PRIVACY) { PrivacyScreen(onBack = { nav.popBackStack() }) }
+            composable(Routes.HELP) { HelpScreen(onBack = { nav.popBackStack() }) }
         }
     }
 }

@@ -103,6 +103,7 @@ fun LockScreen(onUnlock: () -> Unit) {
             Text("M-Pesa Ledger is locked", style = MaterialTheme.typography.titleLarge)
             Text("Unlock with your fingerprint, face or screen lock.", style = MaterialTheme.typography.bodyMedium, color = AresMuted, textAlign = TextAlign.Center)
             Button(onClick = onUnlock, modifier = Modifier.fillMaxWidth().height(52.dp)) { Text("Unlock") }
+            Text(com.ares.mpesaledger.Brand.CREDIT, style = MaterialTheme.typography.labelMedium, color = AresMuted)
         }
     }
 }

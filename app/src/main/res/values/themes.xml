@@ -9,4 +9,11 @@
         <item name="android:statusBarColor">@color/ares_black</item>
         <item name="android:navigationBarColor">@color/ares_black</item>
     </style>
+
+    <!-- Launch theme: androidx SplashScreen (system splash on 12+, emulated on 7-11), then the app theme. -->
+    <style name="Theme.MpesaLedger.Splash" parent="Theme.SplashScreen">
+        <item name="windowSplashScreenBackground">@color/ares_black</item>
+        <item name="windowSplashScreenAnimatedIcon">@drawable/ic_launcher_foreground</item>
+        <item name="postSplashScreenTheme">@style/Theme.MpesaLedger</item>
+    </style>
 </resources>
