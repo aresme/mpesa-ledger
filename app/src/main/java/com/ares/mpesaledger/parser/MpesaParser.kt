@@ -26,7 +26,7 @@ object MpesaParser {
      * Bump whenever parsing output changes for existing messages. A higher version than the
      * one stored in import_state triggers a full inbox rescan, so old messages get re-parsed.
      */
-    const val VERSION = 3
+    const val VERSION = 4
 
     val NAIROBI: ZoneId = ZoneId.of("Africa/Nairobi")
 

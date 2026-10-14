@@ -7,15 +7,18 @@ import org.junit.Test
 
 class FileImportTest {
 
-    @Test fun `termux json keeps only MPESA senders`() {
+    @Test fun `termux json keeps M-Pesa and known financial senders only`() {
         val json = """[
             {"threadid":1,"type":"inbox","read":true,"number":"MPESA","received":"2026-10-01 09:00","body":"A1"},
             {"threadid":2,"type":"inbox","read":true,"number":"M-PESA","body":"A2"},
-            {"threadid":3,"type":"inbox","read":true,"number":"Safaricom","body":"promo"},
+            {"threadid":3,"type":"inbox","read":true,"number":"Safaricom","body":"bundle"},
+            {"threadid":6,"type":"inbox","read":true,"number":"BETIKA","body":"bet"},
             {"threadid":4,"type":"inbox","read":true,"sender":"mpesa","body":"A3"},
             {"threadid":5,"type":"inbox","read":true,"body":"no sender"}
         ]"""
-        assertEquals(listOf("A1", "A2", "A3", "no sender"), SmsFileReader.parse(json).map { it.body })
+        val parsed = SmsFileReader.parse(json)
+        assertEquals(listOf("A1", "A2", "bundle", "A3", "no sender"), parsed.map { it.body })
+        assertEquals("Safaricom", parsed[2].sender) // routed to the Safaricom parser on import
     }
 
     @Test fun `plain text is split on blank lines`() {
