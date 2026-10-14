@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
+
+    <!-- Deliberately NO android.permission.INTERNET: the app is 100% offline. -->
+
+    <!-- allowBackup=false plus data extraction rules keep the ledger DB out of
+         cloud backup and device-to-device transfer (API 31+ ignores allowBackup
+         for D2D, hence the rules file). -->
+    <application
+        android:name=".MpesaLedgerApp"
+        android:allowBackup="false"
+        android:fullBackupContent="@xml/backup_rules"
+        android:dataExtractionRules="@xml/data_extraction_rules"
+        android:icon="@mipmap/ic_launcher"
+        android:label="@string/app_name"
+        android:supportsRtl="true"
+        android:theme="@style/Theme.MpesaLedger"
+        tools:targetApi="37">
+
+        <activity
+            android:name=".MainActivity"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+    </application>
+</manifest>
