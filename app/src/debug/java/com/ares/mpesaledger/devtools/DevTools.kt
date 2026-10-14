@@ -23,10 +23,18 @@ object DevTools {
 
     private const val PREFS = "devtools"
     private const val KEY_DEMO = "demo_mode"
+    private const val KEY_DEMO_EMPTY = "demo_empty"
     private const val SAMPLE_ASSET = "sample_sms.txt"
 
     fun isDemoMode(context: Context): Boolean =
         context.getSharedPreferences(PREFS, Context.MODE_PRIVATE).getBoolean(KEY_DEMO, false)
+
+    /**
+     * "Empty demo": demo database left unseeded and onboarding shown on every launch, so the
+     * first-run and empty-ledger screens can be screenshotted without any real data on screen.
+     */
+    fun isDemoEmpty(context: Context): Boolean =
+        isDemoMode(context) && context.getSharedPreferences(PREFS, Context.MODE_PRIVATE).getBoolean(KEY_DEMO_EMPTY, false)
 
     /**
      * Switching databases under live ViewModels and Flows is error-prone, so persist the flag
@@ -44,7 +52,7 @@ object DevTools {
 
     /** Fills the demo database from the bundled fixture the first time it is opened. */
     suspend fun seedDemoIfEmpty(context: Context, db: AppDatabase, importer: LedgerImporter) {
-        if (db.transactions().count() > 0) return
+        if (isDemoEmpty(context) || db.transactions().count() > 0) return
         val text = context.assets.open(SAMPLE_ASSET).use { it.readBytes().decodeToString() }
         val result = importer.import(SmsText.splitBlocks(text).map { RawSms(it) }, source = "demo seed")
         AppLog.d { "demo seeded: $result" }

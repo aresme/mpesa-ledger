@@ -2,6 +2,7 @@ package com.ares.mpesaledger
 
 import android.content.Context
 import com.ares.mpesaledger.data.AppDatabase
+import com.ares.mpesaledger.data.AppPrefs
 import com.ares.mpesaledger.data.LedgerImporter
 import com.ares.mpesaledger.data.LedgerRepository
 import com.ares.mpesaledger.devtools.DevTools
@@ -24,6 +25,7 @@ class AppContainer(val appContext: Context) {
     val databaseName: String = if (isDemo) AppDatabase.DEMO_NAME else AppDatabase.REAL_NAME
     val database: AppDatabase = AppDatabase.build(appContext, databaseName)
 
+    val prefs = AppPrefs(appContext)
     val importer = LedgerImporter(database)
     val repository = LedgerRepository(database)
     val inboxSync = InboxSync(appContext, importer, InboxReader(appContext.contentResolver), isDemo)

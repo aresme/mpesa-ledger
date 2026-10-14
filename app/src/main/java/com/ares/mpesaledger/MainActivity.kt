@@ -5,16 +5,13 @@ import androidx.activity.ComponentActivity
 import androidx.activity.SystemBarStyle
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
-import androidx.activity.viewModels
 import com.ares.mpesaledger.devtools.DevTools
-import com.ares.mpesaledger.ui.importstatus.ImportStatusScreen
-import com.ares.mpesaledger.ui.importstatus.ImportStatusViewModel
+import com.ares.mpesaledger.ui.navigation.AppNavigation
 import com.ares.mpesaledger.ui.theme.MpesaLedgerTheme
 
 class MainActivity : ComponentActivity() {
 
     private val container get() = (application as MpesaLedgerApp).container
-    private val importStatus: ImportStatusViewModel by viewModels { ImportStatusViewModel.factory(container) }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         // Dark-only app: force light (white) system-bar icons regardless of the system theme.
@@ -24,10 +21,14 @@ class MainActivity : ComponentActivity() {
         )
         super.onCreate(savedInstanceState)
         AppLog.d { "MainActivity created (demo=${container.isDemo})" }
+        // Onboarding only on a real first run without SMS access; demo data needs no setup
+        // (except the debug "empty demo", which exists to preview first-run screens).
+        val showOnboarding = if (container.isDemo) DevTools.isDemoEmpty(this)
+        else !container.prefs.onboardingDone && !container.inboxSync.hasPermission()
         setContent {
-            MpesaLedgerTheme {
-                ImportStatusScreen(
-                    viewModel = importStatus,
+            MpesaLedgerTheme(isDemo = container.isDemo) {
+                AppNavigation(
+                    showOnboarding = showOnboarding,
                     demoToggleAvailable = DevTools.AVAILABLE,
                     onToggleDemo = { DevTools.setDemoModeAndRestart(this, it) },
                 )
@@ -38,7 +39,6 @@ class MainActivity : ComponentActivity() {
     override fun onResume() {
         super.onResume()
         // Incremental inbox scan on every start/resume; catches anything the receiver missed.
-        importStatus.refreshPermission()
         container.syncInboxInBackground()
     }
 }

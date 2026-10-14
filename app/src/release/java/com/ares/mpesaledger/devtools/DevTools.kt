@@ -13,6 +13,9 @@ object DevTools {
     fun isDemoMode(context: Context): Boolean = false
 
     @Suppress("UNUSED_PARAMETER")
+    fun isDemoEmpty(context: Context): Boolean = false
+
+    @Suppress("UNUSED_PARAMETER")
     fun setDemoModeAndRestart(activity: Activity, enabled: Boolean) = Unit
 
     @Suppress("UNUSED_PARAMETER")
