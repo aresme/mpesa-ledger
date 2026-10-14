@@ -30,6 +30,12 @@ adb shell pm clear com.ares.mpesaledger
 ```
 The scripts use the SDK adb (`~/Android/Sdk/platform-tools/adb`), not Ubuntu's older `/usr/bin/adb`.
 
+## Visual direction (decided at checkpoint 2)
+The user rejected the terminal look: build a **modern, polished finance app that keeps the brand**.
+Cards with rounded corners, icons, real charts, clear hierarchy; Inter for all text. Black background,
+#4DFF7A green as the accent (not for body text), very dark grey surfaces, amber/red only for warnings.
+JetBrains Mono only for amounts/codes where tabular alignment helps. No `>` prompts, `ares_sys://` headers or ASCII bars.
+
 ## Demo mode / real data
 - Toggle: the "Demo mode"/"Exit demo" button (debug builds); it persists `shared_prefs/devtools.xml` and restarts the process.
 - Real data (`mpesa.db`) must never be screenshotted, UI-dumped, or have its SMS text read by Claude. Counts and timings only.
