@@ -1,0 +1,25 @@
+# Gradle / build
+.gradle/
+.kotlin/
+build/
+**/build/
+captures/
+.externalNativeBuild/
+.cxx/
+
+# Local config and secrets
+local.properties
+*.jks
+*.keystore
+keystore.properties
+
+# IDE
+.idea/
+*.iml
+.vscode/
+.DS_Store
+
+# Device artifacts (may contain personal data)
+screenshots/
+*.apk
+*.aab
