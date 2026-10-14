@@ -4,6 +4,11 @@
 
     <!-- Deliberately NO android.permission.INTERNET: the app is 100% offline. -->
 
+    <!-- Read-only access to the inbox (sideloaded app, so no Play SMS policy applies). -->
+    <uses-permission android:name="android.permission.READ_SMS" />
+    <!-- Keeps the app installable on tablets/devices without telephony (file import still works). -->
+    <uses-feature android:name="android.hardware.telephony" android:required="false" />
+
     <!-- allowBackup=false plus data extraction rules keep the ledger DB out of
          cloud backup and device-to-device transfer (API 31+ ignores allowBackup
          for D2D, hence the rules file). -->
