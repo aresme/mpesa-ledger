@@ -31,6 +31,7 @@ import com.ares.mpesaledger.ui.dashboard.DashboardScreen
 import com.ares.mpesaledger.ui.detail.DetailScreen
 import com.ares.mpesaledger.ui.detail.DetailViewModel
 import com.ares.mpesaledger.ui.onboarding.OnboardingScreen
+import com.ares.mpesaledger.ui.rules.RulesScreen
 import com.ares.mpesaledger.ui.settings.SettingsScreen
 import com.ares.mpesaledger.ui.theme.AresBlack
 import com.ares.mpesaledger.ui.theme.AresGreen
@@ -49,6 +50,7 @@ object Routes {
     const val BUDGETS = "budgets"
     const val SETTINGS = "settings"
     const val UNPARSED = "unparsed"
+    const val RULES = "rules"
     private const val DETAIL = "detail"
 
     const val ACTIVITY_PATTERN =
@@ -114,6 +116,7 @@ fun AppNavigation(
             composable(Routes.SETTINGS) {
                 SettingsScreen(
                     onOpenUnparsed = { nav.navigate(Routes.UNPARSED) },
+                    onOpenRules = { nav.navigate(Routes.RULES) },
                     demoToggleAvailable = demoToggleAvailable,
                     onToggleDemo = onToggleDemo,
                 )
@@ -126,6 +129,7 @@ fun AppNavigation(
                 ),
             ) { DetailScreen(onBack = { nav.popBackStack() }) }
             composable(Routes.UNPARSED) { UnparsedScreen(onBack = { nav.popBackStack() }) }
+            composable(Routes.RULES) { RulesScreen(onBack = { nav.popBackStack() }) }
         }
     }
 }

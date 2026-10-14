@@ -14,7 +14,11 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Info
+import androidx.compose.material.icons.filled.Lock
+import androidx.compose.material.icons.filled.Share
 import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.Warning
@@ -27,12 +31,17 @@ import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.LifecycleResumeEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.ares.mpesaledger.BuildConfig
+import com.ares.mpesaledger.MainActivity
+import com.ares.mpesaledger.ui.lock.AppLock
 import com.ares.mpesaledger.data.ImportResult
 import com.ares.mpesaledger.ui.appViewModel
 import com.ares.mpesaledger.ui.components.AppIcons
@@ -43,12 +52,14 @@ import com.ares.mpesaledger.ui.onboarding.rememberFileImport
 import com.ares.mpesaledger.ui.onboarding.rememberSmsPermissionRequest
 import com.ares.mpesaledger.ui.theme.AresAmber
 import com.ares.mpesaledger.ui.theme.AresMuted
+import com.ares.mpesaledger.ui.theme.AresRed
 import com.ares.mpesaledger.ui.theme.AresSurface
 import com.ares.mpesaledger.ui.theme.Num
 
 @Composable
 fun SettingsScreen(
     onOpenUnparsed: () -> Unit,
+    onOpenRules: () -> Unit,
     demoToggleAvailable: Boolean,
     onToggleDemo: (Boolean) -> Unit,
 ) {
@@ -58,6 +69,10 @@ fun SettingsScreen(
     val requestSms = rememberSmsPermissionRequest(vm::onPermissionResult)
     val importFile = rememberFileImport()
     LifecycleResumeEffect(Unit) { vm.refreshPermission(); onPauseOrDispose { } }
+    val data = rememberDataActions()
+    var wiping by remember { mutableStateOf(false) }
+    val activity = context as? MainActivity
+    val lockAvailable = remember { AppLock.isAvailable(context) }
 
     Column(Modifier.fillMaxSize()) {
         AppTopBar(title = "Settings")
@@ -94,6 +109,44 @@ fun SettingsScreen(
                 }
             }
             item { ImportStatus(state) }
+            item {
+                Group("Categories") {
+                    ListRow(title = "Category rules", subtitle = "Keyword → category. Add, edit, recategorize", icon = Icons.Filled.Edit, onClick = onOpenRules)
+                }
+            }
+            item {
+                Group("Your data") {
+                    ListRow(title = "Export CSV", subtitle = "All transactions, for a spreadsheet", icon = Icons.Filled.Share, onClick = data.exportCsv)
+                    HorizontalDivider()
+                    ListRow(title = "Export rules", subtitle = "Your category rules as JSON", icon = Icons.Filled.Share, onClick = data.exportRules)
+                    HorizontalDivider()
+                    ListRow(title = "Import rules", subtitle = "From a rules JSON file", icon = AppIcons.FileOpen, onClick = data.importRules)
+                    HorizontalDivider()
+                    ListRow(title = "Wipe all data", subtitle = "Delete the ledger from this app", icon = Icons.Filled.Delete, iconTint = AresRed, onClick = { wiping = true })
+                }
+            }
+            item {
+                Group("Security") {
+                    ListRow(
+                        title = "App lock",
+                        subtitle = if (lockAvailable) "Ask for fingerprint, face or screen lock when opening the app"
+                        else "Set a screen lock (PIN, pattern or fingerprint) on this phone first",
+                        icon = Icons.Filled.Lock,
+                        iconTint = if (lockAvailable) MaterialTheme.colorScheme.primary else AresMuted,
+                        trailing = {
+                            Switch(
+                                checked = state.appLock,
+                                enabled = lockAvailable && activity != null,
+                                onCheckedChange = { on ->
+                                    // Turning it on requires one successful unlock, so nobody locks themselves out.
+                                    if (on) activity?.appLock?.prompt { vm.setAppLock(true); activity.applySecureFlag() }
+                                    else { vm.setAppLock(false); activity?.applySecureFlag() }
+                                },
+                            )
+                        },
+                    )
+                }
+            }
             item {
                 Group("Notifications") {
                     ListRow(
@@ -144,6 +197,7 @@ fun SettingsScreen(
             }
         }
     }
+    if (wiping) WipeDialog(isDemo = state.isDemo, onDismiss = { wiping = false }, onConfirm = { wiping = false; vm.wipe() })
 }
 
 @Composable

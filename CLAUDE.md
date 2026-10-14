@@ -59,14 +59,22 @@ JetBrains Mono only for amounts/codes where tabular alignment helps. No `>` prom
   (Android: reads Room, posts notifications). SQL must stay compatible with API 24's SQLite 3.9 (no UPSERT, no window functions).
 - `ui/` — `theme/` (tokens, Inter + tabular `Num` styles, `Mono` for codes/raw SMS), `components/` (cards, top bar with
   DEMO badge, charts, icons), `navigation/` (string routes, bottom bar), one package per screen with its ViewModel
-  (`dashboard`, `transactions`, `detail`, `budgets`, `settings`, `unparsed`, `onboarding`). `appViewModel { container, saved -> }` = manual DI.
+  (`dashboard`, `transactions`, `detail`, `budgets`, `settings`, `unparsed`, `onboarding`, `rules`, `lock`). `appViewModel { container, saved -> }` = manual DI.
   Chart colours `ChartIncome`/`ChartSpending` were checked with the dataviz palette validator; don't swap them by eye.
 - `app/src/debug/` — debug-only receiver (`DEBUG_SMS`), demo mode (`mpesa_demo.db` from `sample_sms.txt`).
 - `AppContainer` (manual DI) is owned by `MpesaLedgerApp`.
 
+## App lock
+- androidx.biometric 1.1.0 (only stable), BIOMETRIC_WEAK | DEVICE_CREDENTIAL (works API 24+). MainActivity is a FragmentActivity for it.
+- FLAG_SECURE only in release builds when the lock is on (debug must stay screencap-able).
+- Test without a finger: add `<boolean name="app_lock" value="true" />` to `shared_prefs/app.xml` via run-as; screenshots of the
+  system prompt come out black (Android blanks secure auth UI) — that's expected.
+
 ## Device-driving gotchas
 - XOS sometimes ignores fast `input swipe`; use `input touchscreen swipe x1 y1 x2 y2 800`.
 - Small-screen check without the X559: `wm size 480x854; wm density 240`, ALWAYS `wm size reset; wm density reset` after (use a trap).
+- uiautomator text match: button labels may carry leading spaces ("  Add rule"); match on contains, not equals.
+- Never drive the SAF file picker with dumps/screenshots: it lists the user's own files.
 - READ_SMS and RECEIVE_SMS share a permission group: revoking one while the other is granted means the next request is auto-granted.
 
 ## Devices

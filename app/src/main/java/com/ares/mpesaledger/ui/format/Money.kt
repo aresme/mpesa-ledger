@@ -28,3 +28,15 @@ fun formatCompact(cents: Long): String {
 
 private fun trim(v: Double): String =
     if (v >= 10) v.toLong().toString() else ((v * 10).toLong() / 10.0).toString().removeSuffix(".0")
+
+/**
+ * User-typed shillings ("5000", "5,000", "1,250.5", "99.99") -> cents, exactly (no floats).
+ * Returns null for anything else, including more than two decimals.
+ */
+fun parseKshToCents(input: String): Long? {
+    val text = input.trim().replace(",", "").replace(" ", "")
+    val m = Regex("""^(\d{1,12})(?:\.(\d{1,2}))?$""").matchEntire(text) ?: return null
+    val whole = m.groupValues[1].toLong()
+    val frac = m.groupValues[2].padEnd(2, '0').ifEmpty { "00" }.toLong()
+    return whole * 100 + frac
+}

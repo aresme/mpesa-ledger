@@ -11,6 +11,7 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.launch
 
 data class SettingsState(
     val counts: LedgerCounts? = null,
@@ -20,19 +21,21 @@ data class SettingsState(
     val isDemo: Boolean = false,
     val databaseName: String = "",
     val notifyTransactions: Boolean = false,
+    val appLock: Boolean = false,
 )
 
 class SettingsViewModel(private val container: AppContainer) : ViewModel() {
     private val permission = MutableStateFlow(container.inboxSync.hasPermission())
     private val notifyTransactions = MutableStateFlow(container.prefs.notifyTransactions)
+    private val appLock = MutableStateFlow(container.prefs.appLock)
 
     val state: StateFlow<SettingsState> = combine(
         container.repository.observeCounts(),
         container.importer.progress,
         container.importer.lastResult,
-        combine(permission, notifyTransactions) { p, n -> p to n },
-    ) { counts, progress, last, (perm, notify) ->
-        SettingsState(counts, progress, last, perm, container.isDemo, container.databaseName, notify)
+        combine(permission, notifyTransactions, appLock) { p, n, l -> Triple(p, n, l) },
+    ) { counts, progress, last, (perm, notify, lock) ->
+        SettingsState(counts, progress, last, perm, container.isDemo, container.databaseName, notify, lock)
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), SettingsState(isDemo = container.isDemo))
 
     fun refreshPermission() { permission.value = container.inboxSync.hasPermission() }
@@ -46,6 +49,13 @@ class SettingsViewModel(private val container: AppContainer) : ViewModel() {
         container.prefs.notifyTransactions = on
         notifyTransactions.value = on
     }
+
+    fun setAppLock(on: Boolean) {
+        container.prefs.appLock = on
+        appLock.value = on
+    }
+
+    fun wipe() = container.appScope.launch { container.repository.wipe() }
 
     fun reimportEverything() = container.syncInboxInBackground(full = true)
 }
