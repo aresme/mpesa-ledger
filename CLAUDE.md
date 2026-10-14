@@ -36,6 +36,12 @@ scripts/perf.sh [count]              # synthetic N-SMS import + query timings (d
 `pm clear` / uninstall wipes the ledger: check `scripts/unparsed.sh --counts` and ask first.
 The scripts use the SDK adb (`~/Android/Sdk/platform-tools/adb`), not Ubuntu's older `/usr/bin/adb`.
 
+## Branding (2026-10-15)
+- "Built by AreqaTech": all strings in `Brand.kt` (credit, copyright, Safaricom non-affiliation disclaimer). Shown in About,
+  Settings footer, onboarding, lock screen, privacy/help pages, README.
+- Icon = three rising rounded green bars (`ic_launcher_foreground`, monochrome, notification icon). Splash via core-splashscreen.
+- Version 1.0.0 (versionCode 10000); APKs named `MpesaLedger-<version>-<type>.apk` (install.sh globs it).
+
 ## Visual direction (decided at checkpoint 2)
 The user rejected the terminal look: build a **modern, polished finance app that keeps the brand**.
 Cards with rounded corners, icons, real charts, clear hierarchy; Inter for all text. Black background,

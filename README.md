@@ -1,5 +1,7 @@
 # M-Pesa Ledger
 
+*Built by **AreqaTech** · version 1.0.0*
+
 An offline Android app that turns your M-Pesa confirmation SMS into a monthly ledger: money in and out, fees,
 Fuliza, savings, spending by category, top recipients, a 12-month trend and per-category budgets with alerts.
 
@@ -171,10 +173,10 @@ Release builds use R8 (minify and resource shrinking). Signing settings are read
 3. Build, verify and install:
    ```bash
    ./gradlew :app:assembleRelease
-   $ANDROID_HOME/build-tools/36.0.0/apksigner verify --print-certs app/build/outputs/apk/release/app-release.apk
-   adb install -r app/build/outputs/apk/release/app-release.apk
+   $ANDROID_HOME/build-tools/36.0.0/apksigner verify --print-certs app/build/outputs/apk/release/MpesaLedger-1.0.0-release.apk
+   adb install -r app/build/outputs/apk/release/MpesaLedger-1.0.0-release.apk
    ```
-   Without the properties, the build produces `app-release-unsigned.apk` instead.
+   APKs are named `MpesaLedger-<version>-<buildType>.apk`. Without the signing properties the release is unsigned.
 
 Release builds contain no debug code: no demo data, no simulated-SMS receiver and no logging. All logging goes
 through `AppLog`, which does nothing in release.
@@ -209,7 +211,17 @@ through `AppLog`, which does nothing in release.
 | Full Activity list (4,865 rows) | 107 ms |
 | Cold start, signed release build | 0.34–0.37 s (about 1 s on the very first launch) |
 
+## About, privacy and help in the app
+
+*Settings → Help & about* has an About screen (version, build, credits, open-source licences, technical details),
+the privacy policy and a Help & FAQ. M-Pesa Ledger is independent and not affiliated with Safaricom PLC; M-PESA,
+Fuliza, M-Shwari, Okoa Jahazi and GlobalPay are trademarks of their owners.
+
 ## Licences
 
 Inter and JetBrains Mono are bundled under the SIL Open Font License 1.1 (`app/src/main/assets/licenses/`).
 `mpesa_ledger.py` is the original Python prototype the parser was ported from.
+
+---
+
+© 2026 AreqaTech. All rights reserved.
