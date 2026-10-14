@@ -1,0 +1,100 @@
+package com.ares.mpesaledger.data
+
+import androidx.room.Dao
+import androidx.room.Insert
+import androidx.room.OnConflictStrategy
+import androidx.room.Query
+import androidx.room.Upsert
+import com.ares.mpesaledger.domain.MonthSummary
+import com.ares.mpesaledger.domain.MonthTotals
+import kotlinx.coroutines.flow.Flow
+
+/** Sums shared by the month queries. Fees count every row, including Fuliza access fees. */
+private const val SUMS = """
+    COALESCE(SUM(CASE WHEN direction = 'in' THEN amountCents END), 0) AS inCents,
+    COALESCE(SUM(CASE WHEN direction = 'out' THEN amountCents END), 0) AS outCents,
+    COALESCE(SUM(feeCents), 0) AS feeCents,
+    COALESCE(SUM(CASE WHEN kind = 'fuliza' THEN amountCents END), 0) AS fulizaCents,
+    COALESCE(SUM(CASE WHEN kind = 'savings' THEN amountCents END), 0) AS savedCents
+"""
+
+@Dao
+interface TransactionDao {
+    /** Insert-or-ignore on (code, kind). Returned row id is -1 for each ignored duplicate. */
+    @Insert(onConflict = OnConflictStrategy.IGNORE)
+    suspend fun insertAll(rows: List<TransactionEntity>): List<Long>
+
+    /** Fuliza messages carry no date: borrow it from the row sharing the same code. */
+    @Query(
+        """UPDATE transactions SET timestamp = (
+               SELECT t2.timestamp FROM transactions t2
+               WHERE t2.code = transactions.code AND t2.timestamp IS NOT NULL LIMIT 1)
+           WHERE timestamp IS NULL"""
+    )
+    suspend fun inheritMissingTimestamps(): Int
+
+    /** [start, end) are epoch millis of Nairobi month boundaries. */
+    @Query("SELECT $SUMS FROM transactions WHERE timestamp >= :start AND timestamp < :end")
+    suspend fun monthTotals(start: Long, end: Long): MonthTotals
+
+    @Query("SELECT $SUMS FROM transactions WHERE timestamp >= :start AND timestamp < :end")
+    fun observeMonthTotals(start: Long, end: Long): Flow<MonthTotals>
+
+    /** [offsetSeconds] shifts UTC to Nairobi wall time (EAT, fixed +3h, no DST). */
+    @Query(
+        """SELECT strftime('%Y-%m', timestamp / 1000 + :offsetSeconds, 'unixepoch') AS month, $SUMS
+           FROM transactions WHERE timestamp IS NOT NULL
+           GROUP BY month ORDER BY month DESC LIMIT :limit"""
+    )
+    fun observeMonthSummaries(offsetSeconds: Long, limit: Int): Flow<List<MonthSummary>>
+
+    @Query("SELECT COALESCE(categoryOverride, category) FROM transactions WHERE code = :code AND kind = :kind")
+    suspend fun effectiveCategory(code: String, kind: String): String?
+
+    @Query("SELECT * FROM transactions WHERE code = :code AND kind = :kind")
+    suspend fun get(code: String, kind: String): TransactionEntity?
+
+    @Query("SELECT COUNT(*) FROM transactions")
+    suspend fun count(): Int
+}
+
+@Dao
+interface UnparsedDao {
+    @Insert(onConflict = OnConflictStrategy.IGNORE)
+    suspend fun insert(row: UnparsedEntity): Long
+
+    @Query("SELECT * FROM unparsed ORDER BY firstSeen DESC")
+    fun observeAll(): Flow<List<UnparsedEntity>>
+
+    @Query("SELECT COUNT(*) FROM unparsed")
+    suspend fun count(): Int
+}
+
+@Dao
+interface RuleDao {
+    @Query("SELECT * FROM category_rules")
+    suspend fun getAll(): List<CategoryRuleEntity>
+}
+
+@Dao
+interface ImportStateDao {
+    @Query("SELECT * FROM import_state WHERE id = 0")
+    suspend fun get(): ImportStateEntity?
+
+    @Upsert
+    suspend fun put(state: ImportStateEntity)
+}
+
+/** Row counts for status displays, observed as one Flow. */
+data class LedgerCounts(val transactions: Int, val unparsed: Int, val rules: Int, val undated: Int)
+
+@Dao
+interface StatsDao {
+    @Query(
+        """SELECT (SELECT COUNT(*) FROM transactions) AS transactions,
+                  (SELECT COUNT(*) FROM unparsed) AS unparsed,
+                  (SELECT COUNT(*) FROM category_rules) AS rules,
+                  (SELECT COUNT(*) FROM transactions WHERE timestamp IS NULL) AS undated"""
+    )
+    fun observeCounts(): Flow<LedgerCounts>
+}

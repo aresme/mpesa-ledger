@@ -54,3 +54,6 @@ sealed interface ParseResult {
     /** No transaction code: promos, reminders, etc. Skipped silently. */
     data object NotTransaction : ParseResult
 }
+
+/** One SMS as read from the inbox or a file. [smsId] and [date] are null for file imports. */
+data class RawSms(val body: String, val smsId: Long? = null, val date: Long? = null)
