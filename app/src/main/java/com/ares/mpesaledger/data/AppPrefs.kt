@@ -15,7 +15,12 @@ class AppPrefs(context: Context) {
         get() = prefs.getBoolean(KEY_NOTIFY_TRANSACTIONS, false)
         set(value) = prefs.edit().putBoolean(KEY_NOTIFY_TRANSACTIONS, value).apply()
 
+    var appLock: Boolean
+        get() = prefs.getBoolean(KEY_APP_LOCK, false)
+        set(value) = prefs.edit().putBoolean(KEY_APP_LOCK, value).apply()
+
     private companion object {
+        const val KEY_APP_LOCK = "app_lock"
         const val KEY_ONBOARDING_DONE = "onboarding_done"
         const val KEY_NOTIFY_TRANSACTIONS = "notify_transactions"
     }

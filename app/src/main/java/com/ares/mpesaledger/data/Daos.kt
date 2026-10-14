@@ -58,6 +58,10 @@ interface TransactionDao {
     @Query("SELECT COUNT(*) FROM transactions")
     suspend fun count(): Int
 
+    /** Export order: oldest first, undated (no timestamp) last. */
+    @Query("SELECT * FROM transactions ORDER BY timestamp IS NULL, timestamp, code, kind")
+    suspend fun allForExport(): List<TransactionEntity>
+
     /** Spending (direction out, amounts only) per effective category, largest first. */
     @Query(
         """SELECT COALESCE(categoryOverride, category) AS category, SUM(amountCents) AS totalCents, COUNT(*) AS count
@@ -161,6 +165,13 @@ interface RuleDao {
     /** Same keyword + isUser replaces the old rule (unique index). */
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun upsert(rule: CategoryRuleEntity): Long
+
+    @Query("SELECT * FROM category_rules WHERE isUser = 1 ORDER BY keyword")
+    suspend fun userRules(): List<CategoryRuleEntity>
+
+    /** Only user rules can be deleted; the built-in defaults are read-only. */
+    @Query("DELETE FROM category_rules WHERE id = :id AND isUser = 1")
+    suspend fun deleteUserRule(id: Long): Int
 }
 
 @Dao
@@ -192,6 +203,16 @@ interface ImportStateDao {
 
     @Upsert
     suspend fun put(state: ImportStateEntity)
+}
+
+/** Wipe: explicit deletes (Room's clearAllTables can't run inside a transaction). */
+@Dao
+interface WipeDao {
+    @Query("DELETE FROM transactions") suspend fun transactions()
+    @Query("DELETE FROM unparsed") suspend fun unparsed()
+    @Query("DELETE FROM category_rules") suspend fun rules()
+    @Query("DELETE FROM budgets") suspend fun budgets()
+    @Query("DELETE FROM import_state") suspend fun importState()
 }
 
 /** Row counts for status displays, observed as one Flow. */

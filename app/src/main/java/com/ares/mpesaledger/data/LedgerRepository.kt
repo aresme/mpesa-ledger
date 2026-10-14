@@ -79,6 +79,53 @@ class LedgerRepository(private val db: AppDatabase) {
             recategorizeAllLocked()
         }
 
+    fun observeRules(): Flow<List<CategoryRuleEntity>> = db.rules().observeAll()
+
+    /** Add or edit a user rule (keyword stored uppercase), then re-apply all rules. */
+    suspend fun saveUserRule(id: Long?, keyword: String, category: String): Int = db.withTransaction {
+        if (id != null) db.rules().deleteUserRule(id)
+        db.rules().upsert(CategoryRuleEntity(keyword = keyword.trim().uppercase(), category = category.trim(), isUser = true))
+        recategorizeAllLocked()
+    }
+
+    suspend fun deleteUserRule(id: Long): Int = db.withTransaction {
+        db.rules().deleteUserRule(id)
+        recategorizeAllLocked()
+    }
+
+    suspend fun exportRulesJson(): String = RulesJson.encode(db.rules().userRules())
+
+    /** Imports user rules (same keyword replaces), then recategorizes. Returns rules imported. */
+    suspend fun importRulesJson(json: String): Int {
+        val rules = RulesJson.decode(json)
+        db.withTransaction {
+            rules.forEach { (k, c) -> db.rules().upsert(CategoryRuleEntity(keyword = k, category = c, isUser = true)) }
+            recategorizeAllLocked()
+        }
+        return rules.size
+    }
+
+    suspend fun exportCsv(out: java.io.Writer): Int {
+        val rows = tx.allForExport()
+        CsvExport.write(rows, out)
+        return rows.size
+    }
+
+    fun observeBudgets(): Flow<List<BudgetEntity>> = db.budgets().observeAll()
+
+    suspend fun setBudget(category: String, limitCents: Long) = db.budgets().put(BudgetEntity(category.trim(), limitCents))
+
+    suspend fun deleteBudget(category: String) = db.budgets().delete(category)
+
+    /**
+     * Deletes everything in this database (transactions, unparsed, rules, budgets, import state)
+     * and re-seeds the default rules. SMS on the phone are untouched.
+     */
+    suspend fun wipe() = db.withTransaction {
+        db.wipe().run { transactions(); unparsed(); rules(); budgets(); importState() }
+        DefaultRules.all.forEach { db.rules().upsert(CategoryRuleEntity(keyword = it.keyword.uppercase(), category = it.category, isUser = false)) }
+    }
+
     /** Re-applies rules to the rule-derived `category` column. Manual overrides survive. */
     suspend fun recategorizeAll(): Int = db.withTransaction { recategorizeAllLocked() }
 

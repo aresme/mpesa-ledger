@@ -74,6 +74,26 @@ class DashboardDataTest {
         assertEquals(0, repo.observeList(ListFilter(query = "%")).first().size)         // LIKE wildcard is escaped
     }
 
+    @Test fun wipeEmptiesEverythingAndReseedsDefaults() = runBlocking {
+        repo.setBudget("Groceries", 100000)
+        repo.saveUserRule(null, "bolt", "Work")
+        repo.wipe()
+        val counts = repo.observeCounts().first()
+        assertEquals(0, counts.transactions)
+        assertEquals(16, counts.rules)               // defaults back, user rule gone
+        assertEquals(0, repo.observeBudgets().first().size)
+        assertEquals(null, db.importState().get())   // next inbox sync starts from scratch
+    }
+
+    @Test fun csvExportCoversEveryRowWithEffectiveCategory() = runBlocking {
+        repo.setOverride("TJA7H8I9J0", "till", "Treats")
+        val out = java.io.StringWriter()
+        assertEquals(17, repo.exportCsv(out))
+        val lines = out.toString().trim().split("\r\n")
+        assertEquals(18, lines.size)
+        assertEquals(true, lines.any { it.startsWith("TJA7H8I9J0,till,out,320.00,0.00,414.50,JAVA HOUSE,,,2026-09-20T12:45,Treats") })
+    }
+
     @Test fun alwaysCategorizeCreatesRuleAndOverridesSurviveRecategorize() = runBlocking {
         repo.setOverride("TJA7H8I9J0", "till", "Treats")                 // manual override on JAVA HOUSE
         repo.addUserRuleAndRecategorize("MERCY WANJIKU", "Family", "TJA5F6G7H8", "sent")
