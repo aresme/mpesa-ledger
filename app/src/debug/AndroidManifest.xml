@@ -15,5 +15,14 @@
                 <action android:name="com.ares.mpesaledger.DEBUG_SMS" />
             </intent-filter>
         </receiver>
+        <!-- Debug-only perf test (scripts/perf.sh); demo mode only. -->
+        <receiver
+            android:name=".debug.PerfReceiver"
+            android:exported="true"
+            android:permission="android.permission.DUMP">
+            <intent-filter>
+                <action android:name="com.ares.mpesaledger.DEBUG_PERF" />
+            </intent-filter>
+        </receiver>
     </application>
 </manifest>
