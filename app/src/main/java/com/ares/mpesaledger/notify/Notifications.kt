@@ -22,6 +22,7 @@ import com.ares.mpesaledger.R
 object Notifications {
     const val CHANNEL_BUDGETS = "budgets"
     const val CHANNEL_TRANSACTIONS = "transactions"
+    const val CHANNEL_BILLS = "bills"
 
     fun createChannels(context: Context) {
         if (Build.VERSION.SDK_INT < 26) return
@@ -29,6 +30,11 @@ object Notifications {
         nm.createNotificationChannel(
             NotificationChannel(CHANNEL_BUDGETS, "Budgets", NotificationManager.IMPORTANCE_DEFAULT).apply {
                 description = "When a category reaches 80% or 100% of its monthly budget"
+            }
+        )
+        nm.createNotificationChannel(
+            NotificationChannel(CHANNEL_BILLS, "Bills", NotificationManager.IMPORTANCE_DEFAULT).apply {
+                description = "A reminder two days before a repeat payment is usually due"
             }
         )
         nm.createNotificationChannel(

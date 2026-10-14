@@ -6,6 +6,7 @@ import androidx.room.OnConflictStrategy
 import androidx.room.Query
 import androidx.room.Upsert
 import com.ares.mpesaledger.domain.MonthSummary
+import com.ares.mpesaledger.domain.Payment
 import com.ares.mpesaledger.domain.MonthTotals
 import kotlinx.coroutines.flow.Flow
 
@@ -104,6 +105,19 @@ interface TransactionDao {
 
     @Query("SELECT * FROM transactions WHERE code = :code AND kind = :kind")
     fun observe(code: String, kind: String): Flow<TransactionEntity?>
+
+    /** Outgoing payments that can form bills, since [since] (epoch millis). */
+    @Query(
+        """SELECT kind, counterparty, account, amountCents, timestamp FROM transactions
+           WHERE direction = 'out' AND kind IN ('paybill', 'till', 'sent') AND timestamp >= :since"""
+    )
+    fun observeBillPayments(since: Long): Flow<List<Payment>>
+
+    @Query(
+        """SELECT kind, counterparty, account, amountCents, timestamp FROM transactions
+           WHERE direction = 'out' AND kind IN ('paybill', 'till', 'sent') AND timestamp >= :since"""
+    )
+    suspend fun billPayments(since: Long): List<Payment>
 
     /** Fuliza loans and repayments only (a handful of rows), for the Fuliza tracker. */
     @Query("SELECT * FROM transactions WHERE kind IN ('fuliza', 'fuliza_repay')")

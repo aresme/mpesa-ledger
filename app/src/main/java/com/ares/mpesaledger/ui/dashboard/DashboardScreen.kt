@@ -33,7 +33,10 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.LifecycleResumeEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.ares.mpesaledger.data.RecipientTotal
+import com.ares.mpesaledger.domain.Bill
+import com.ares.mpesaledger.domain.BillStatus
 import com.ares.mpesaledger.domain.FulizaSummary
+import com.ares.mpesaledger.ui.bills.billStatusText
 import com.ares.mpesaledger.domain.MonthTotals
 import com.ares.mpesaledger.ui.fuliza.dueText
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
@@ -103,7 +106,7 @@ private fun DashboardContent(
     onOpenCategory: (String, YearMonth) -> Unit,
     onOpenActivity: () -> Unit,
     onOpenFuliza: () -> Unit,
-    @Suppress("UNUSED_PARAMETER") onOpenBills: () -> Unit,
+    onOpenBills: () -> Unit,
 ) {
     var selectedBar by rememberSaveable(state.month.toString()) { mutableIntStateOf(11) }
     LazyColumn(
@@ -128,6 +131,7 @@ private fun DashboardContent(
         } else {
             item { NetCard(totals) }
             item { StatGrid(totals) }
+            if (state.bills.isNotEmpty()) item { BillsCard(state.bills, onOpenBills) }
             state.fuliza?.takeIf { it.hasHistory }?.let { f -> item { FulizaCard(f, totals, onOpenFuliza) } }
             if (state.categories.isNotEmpty()) {
                 item {
@@ -189,6 +193,29 @@ private fun StatGrid(t: MonthTotals) {
                 if (t.savingsWithdrawnCents > 0) "${formatCents(t.savingsWithdrawnCents)} taken out" else "to savings",
                 Modifier.weight(1f),
             )
+        }
+    }
+}
+
+/** The bills that need attention first (overdue, due soon, upcoming); opens the Bills screen. */
+@Composable
+private fun BillsCard(bills: List<Bill>, onOpen: () -> Unit) {
+    val pending = bills.filter { it.status != BillStatus.PAID }
+    AppCard(onClick = onOpen) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Text("Bills", style = MaterialTheme.typography.titleMedium, modifier = Modifier.weight(1f))
+            Text(if (pending.isEmpty()) "All paid this month" else "${pending.size} to pay", style = MaterialTheme.typography.labelMedium, color = AresMuted)
+            Icon(Icons.AutoMirrored.Filled.KeyboardArrowRight, contentDescription = "Open bills", tint = AresMuted)
+        }
+        pending.take(3).forEach { b ->
+            val (text, color) = billStatusText(b)
+            Row(Modifier.fillMaxWidth().padding(top = 8.dp), verticalAlignment = Alignment.CenterVertically) {
+                Column(Modifier.weight(1f)) {
+                    Text(b.name, style = MaterialTheme.typography.bodyLarge, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                    Text(text, style = MaterialTheme.typography.bodySmall, color = color, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                }
+                Text(formatCents(b.usualAmountCents), style = Num.medium)
+            }
         }
     }
 }

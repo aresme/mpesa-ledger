@@ -36,6 +36,7 @@ class LiveSmsPipeline(private val container: AppContainer) {
                 if (result.inserted > 0) {
                     notifyTransaction(tx.code, tx.kind.key)
                     container.budgetChecker.check()
+                    container.billReminder.check()
                 }
             }
         }

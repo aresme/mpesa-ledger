@@ -10,6 +10,8 @@
     <uses-permission android:name="android.permission.RECEIVE_SMS" />
     <!-- Budget alerts (API 33+ asks at runtime). -->
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+    <!-- Re-arm the daily bill-reminder alarm after a reboot. -->
+    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
     <!-- Keeps the app installable on tablets/devices without telephony (file import still works). -->
     <uses-feature android:name="android.hardware.telephony" android:required="false" />
 
@@ -34,6 +36,13 @@
             android:permission="android.permission.BROADCAST_SMS">
             <intent-filter>
                 <action android:name="android.provider.Telephony.SMS_RECEIVED" />
+            </intent-filter>
+        </receiver>
+
+        <receiver android:name=".notify.BillReminderReceiver" android:exported="false" />
+        <receiver android:name=".notify.BootReceiver" android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.BOOT_COMPLETED" />
             </intent-filter>
         </receiver>
 

@@ -11,6 +11,8 @@ import com.ares.mpesaledger.parser.MpesaParser
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.map
+import com.ares.mpesaledger.domain.Bill
+import com.ares.mpesaledger.domain.BillDetector
 import com.ares.mpesaledger.domain.FulizaEvent
 import com.ares.mpesaledger.domain.FulizaSummary
 import com.ares.mpesaledger.domain.FulizaTracker
@@ -63,6 +65,12 @@ class LedgerRepository(private val db: AppDatabase) {
     fun observeTransaction(code: String, kind: String): Flow<TransactionEntity?> = tx.observe(code, kind)
 
     fun observeUnparsed(): Flow<List<UnparsedEntity>> = db.unparsed().observeAll()
+
+    /** Detected bills, including hidden ones (the screen splits them). */
+    fun observeBills(): Flow<List<Bill>> =
+        tx.observeBillPayments(billWindowStart()).map { BillDetector.detect(it) }
+
+    suspend fun bills(): List<Bill> = BillDetector.detect(tx.billPayments(billWindowStart()))
 
     fun observeFuliza(): Flow<FulizaSummary> = tx.observeFuliza().map { rows ->
         FulizaTracker.summarize(rows.map {
@@ -149,6 +157,9 @@ class LedgerRepository(private val db: AppDatabase) {
     }
 
     companion object {
+        fun billWindowStart(): Long =
+            MonthRange.of(YearMonth.now(MpesaParser.NAIROBI).minusMonths((BillDetector.LOOKBACK_MONTHS - 1).toLong())).start
+
         /** EAT is a fixed UTC+3 with no DST, so one offset is valid for every stored timestamp. */
         fun nairobiOffsetSeconds(): Long =
             MpesaParser.NAIROBI.rules.getOffset(Instant.now()).totalSeconds.toLong()

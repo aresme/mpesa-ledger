@@ -6,6 +6,7 @@ import com.ares.mpesaledger.data.AppPrefs
 import com.ares.mpesaledger.data.LedgerImporter
 import com.ares.mpesaledger.data.LedgerRepository
 import com.ares.mpesaledger.devtools.DevTools
+import com.ares.mpesaledger.domain.BillReminder
 import com.ares.mpesaledger.domain.BudgetChecker
 import com.ares.mpesaledger.sms.InboxReader
 import com.ares.mpesaledger.sms.InboxSync
@@ -32,6 +33,7 @@ class AppContainer(val appContext: Context) {
     val repository = LedgerRepository(database)
     val inboxSync = InboxSync(appContext, importer, InboxReader(appContext.contentResolver), isDemo)
     val budgetChecker = BudgetChecker(appContext, database)
+    val billReminder = BillReminder(appContext, repository, prefs)
     val livePipeline = LiveSmsPipeline(this)
 
     init {
@@ -43,6 +45,8 @@ class AppContainer(val appContext: Context) {
             val result = inboxSync.sync(full)
             // Messages the receiver missed (app killed) still trigger budget alerts on catch-up.
             if (result != null && result.inserted > 0) budgetChecker.check()
+            // Also the fallback for the daily bill alarm, which XOS may drop.
+            billReminder.check()
         }
     }
 }

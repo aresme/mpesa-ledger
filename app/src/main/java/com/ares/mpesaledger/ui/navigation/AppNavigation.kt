@@ -31,6 +31,7 @@ import com.ares.mpesaledger.ui.dashboard.DashboardScreen
 import com.ares.mpesaledger.ui.detail.DetailScreen
 import com.ares.mpesaledger.ui.detail.DetailViewModel
 import com.ares.mpesaledger.ui.onboarding.OnboardingScreen
+import com.ares.mpesaledger.ui.bills.BillsScreen
 import com.ares.mpesaledger.ui.fuliza.FulizaScreen
 import com.ares.mpesaledger.ui.rules.RulesScreen
 import com.ares.mpesaledger.ui.settings.SettingsScreen
@@ -136,6 +137,7 @@ fun AppNavigation(
             composable(Routes.UNPARSED) { UnparsedScreen(onBack = { nav.popBackStack() }) }
             composable(Routes.RULES) { RulesScreen(onBack = { nav.popBackStack() }) }
             composable(Routes.FULIZA) { FulizaScreen(onBack = { nav.popBackStack() }) }
+            composable(Routes.BILLS) { BillsScreen(onBack = { nav.popBackStack() }) }
         }
     }
 }
