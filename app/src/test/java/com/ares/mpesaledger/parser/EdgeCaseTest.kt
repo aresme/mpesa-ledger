@@ -169,6 +169,57 @@ class EdgeCaseTest {
         assertNull(tx.balanceCents)
     }
 
+    // Parser v3. Shapes follow Safaricom's documented wording; synthetic codes and amounts.
+    @Test fun `money moved back out of M-Shwari`() {
+        val tx = parseTx(
+            "QAB1234590 Confirmed.Ksh500.00 transferred from M-Shwari account on 5/10/26 at 9:15 PM. " +
+                "M-Shwari balance is Ksh100.00 .M-PESA balance is Ksh600.00 .Transaction cost Ksh.0.00"
+        )
+        assertEquals(Kind.SAVINGS_WITHDRAW, tx.kind)
+        assertEquals(Direction.NONE, tx.direction)
+        assertEquals(50_000L, tx.amountCents)
+        assertEquals("M-Shwari", tx.counterparty)
+        assertEquals(60_000L, tx.balanceCents) // the wallet, not the M-Shwari balance
+        assertEquals(0L, tx.feeCents)           // "Ksh.0.00" spelling
+        assertEquals("2026-10-05 21:15", nairobi(tx.timestamp))
+    }
+
+    @Test fun `KCB M-PESA savings in and out`() {
+        val into = parseTx(
+            "QAB1234591 Confirmed. Ksh1,000.00 transferred to KCB M-PESA account on 6/10/26 at 8:00 AM. " +
+                "KCB M-PESA balance is Ksh5,000.00. M-PESA balance is Ksh250.00."
+        )
+        assertEquals(Kind.SAVINGS, into.kind)
+        assertEquals("KCB M-PESA", into.counterparty)
+        assertEquals(25_000L, into.balanceCents) // never the KCB balance
+        val out = parseTx(
+            "QAB1234592 Confirmed. Ksh300.00 transferred from KCB M-PESA account on 7/10/26 at 8:00 AM. " +
+                "KCB M-PESA balance is Ksh4,700.00. M-PESA balance is Ksh550.00."
+        )
+        assertEquals(Kind.SAVINGS_WITHDRAW, out.kind)
+        assertEquals("KCB M-PESA", out.counterparty)
+        assertEquals(55_000L, out.balanceCents)
+    }
+
+    @Test fun `M-Shwari deposit still parses as before`() {
+        val tx = parseTx("QAB1234593 Confirmed. You have transferred Ksh200.00 to your M-Shwari account on 13/10/26 at 4:00 PM. M-Shwari balance is Ksh1,200.00 . M-PESA balance is Ksh2,108.57 .")
+        assertEquals(Kind.SAVINGS, tx.kind)
+        assertEquals("M-Shwari", tx.counterparty)
+    }
+
+    @Test fun `paying a Pochi la Biashara is a normal send`() {
+        val tx = parseTx("QAB1234594 Confirmed. Ksh150.00 sent to MAMA PIMA on 8/10/26 at 7:12 PM. New M-PESA balance is Ksh400.00. Transaction cost, Ksh0.00.")
+        assertEquals(Kind.SENT, tx.kind)
+        assertEquals("MAMA PIMA", tx.counterparty)
+    }
+
+    @Test fun `reversals and M-Shwari loans stay unparsed until a real example is added`() {
+        val reversal = "QAB1234595 Confirmed. Transaction QAB1234594 has been reversed. Your account balance is now Ksh550.00."
+        assertTrue(MpesaParser.parse(reversal) is ParseResult.Unparsed)
+        val loan = "QAB1234596 Confirmed. Your M-Shwari loan of Ksh1,000.00 has been approved on 9/10/26 at 1:00 PM."
+        assertTrue(MpesaParser.parse(loan) is ParseResult.Unparsed)
+    }
+
     private fun parseTx(body: String): ParsedTransaction {
         val result = MpesaParser.parse(body)
         assertTrue("expected a transaction, got $result", result is ParseResult.Transaction)

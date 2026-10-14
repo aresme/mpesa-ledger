@@ -39,7 +39,7 @@ data class DashboardState(
     val loaded: Boolean get() = counts != null && totals != null
     val ledgerEmpty: Boolean get() = counts?.transactions == 0
     val monthEmpty: Boolean
-        get() = totals?.let { it.inCents == 0L && it.outCents == 0L && it.feeCents == 0L && it.fulizaCents == 0L && it.fulizaRepaidCents == 0L && it.savedCents == 0L } ?: false
+        get() = totals?.let { it.inCents == 0L && it.outCents == 0L && it.feeCents == 0L && it.fulizaCents == 0L && it.fulizaRepaidCents == 0L && it.savedCents == 0L && it.savingsWithdrawnCents == 0L } ?: false
 }
 
 @OptIn(ExperimentalCoroutinesApi::class)

@@ -9,6 +9,8 @@ data class MonthSummary(
     val fulizaCents: Long,
     val fulizaRepaidCents: Long,
     val savedCents: Long,
+    /** Moved back out of M-Shwari / KCB M-PESA this month. Last, with a default, so older call sites stay valid. */
+    val savingsWithdrawnCents: Long = 0,
 ) {
     val netCents: Long get() = inCents - outCents - feeCents
 }

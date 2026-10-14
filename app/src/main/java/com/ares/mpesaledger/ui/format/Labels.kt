@@ -11,7 +11,8 @@ fun kindLabel(key: String): String = when (Kind.fromKey(key)) {
     Kind.WITHDRAW -> "Withdrawal"
     Kind.DEPOSIT -> "Deposit"
     Kind.AIRTIME -> "Airtime"
-    Kind.SAVINGS -> "To M-Shwari"
+    Kind.SAVINGS -> "To savings"
+    Kind.SAVINGS_WITHDRAW -> "From savings"
     Kind.FULIZA -> "Fuliza loan"
     Kind.FULIZA_REPAY -> "Fuliza repayment"
     null -> key

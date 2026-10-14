@@ -12,6 +12,10 @@ import java.util.regex.Pattern
  * - balance also matches "M-PESA balance is" / "Your M-PESA balance is", with or without "Ksh"
  * - withdraw agents are split into "286412" (account) and "CITY STAR AGENCIES" (counterparty)
  * - Fuliza repayments (seen on the real phone, 2026-10) are their own kind
+ * - money moved back out of M-Shwari, and KCB M-PESA savings in/out (parser v3). These were
+ *   added from Safaricom's documented wording, not yet from a real SMS on this phone; anything
+ *   that doesn't match exactly still goes to Unparsed. Reversals and M-Shwari loans are left
+ *   unparsed on purpose until a real example shows their exact wording.
  *
  * To support a new SMS format: add a [Kind] (if needed), a pattern in [patterns] at the
  * right priority, and a fixture test with a masked real message.
@@ -22,7 +26,7 @@ object MpesaParser {
      * Bump whenever parsing output changes for existing messages. A higher version than the
      * one stored in import_state triggers a full inbox rescan, so old messages get re-parsed.
      */
-    const val VERSION = 2
+    const val VERSION = 3
 
     val NAIROBI: ZoneId = ZoneId.of("Africa/Nairobi")
 
@@ -32,8 +36,10 @@ object MpesaParser {
 
     private val CODE = Pattern.compile("""^\s*([A-Z0-9]{10})\s+confirmed""", CI)
     private val WHEN = Pattern.compile("""on (\d{1,2})/(\d{1,2})/(\d{2,4}) at (\d{1,2}):(\d{2})\s?([AP]M)""", CI)
-    private val BALANCE = Pattern.compile("""(?:New |Your )?M-PESA balance is (?:Ksh\s?)?$AMT""", CI)
-    private val FEE = Pattern.compile("""(?:Transaction cost,?|Access Fee charged)\s*$KSH""", CI)
+    // (?<!KCB ) keeps a "KCB M-PESA balance" from being read as the M-PESA wallet balance.
+    private val BALANCE = Pattern.compile("""(?<!KCB )(?:New |Your )?M-PESA balance is (?:Ksh\s?)?$AMT""", CI)
+    // Savings messages write the fee as "Transaction cost Ksh.0.00".
+    private val FEE = Pattern.compile("""(?:Transaction cost,?|Access Fee charged)\s*Ksh\.?\s?$AMT""", CI)
     private val PHONE_TAIL = Pattern.compile("""\s+((?:\+?254|0)[\d*]{6,12})$""")
     private val AGENT = Pattern.compile("""^(\d+)\s*-\s*(.+)$""")
 
@@ -42,7 +48,7 @@ object MpesaParser {
      * carries a literal phrase from its own regex: if the phrase isn't in the text the regex
      * cannot match, so the cheap contains() check skips it (same results, ~5x faster imports).
      */
-    private class KindPattern(val kind: Kind, val anchor: String, regex: String) {
+    private class KindPattern(val kind: Kind, val anchor: String, regex: String, val counterparty: String? = null) {
         val pattern: Pattern = Pattern.compile(regex, CI)
     }
 
@@ -55,7 +61,10 @@ object MpesaParser {
         KindPattern(Kind.WITHDRAW, "Withdraw", """Withdraw $KSH from (.+?)\s*New M-PESA"""),
         KindPattern(Kind.DEPOSIT, " cash to ", """Give $KSH cash to (.+?)\s*New M-PESA"""),
         KindPattern(Kind.AIRTIME, " of airtime", """You bought $KSH of airtime"""),
-        KindPattern(Kind.SAVINGS, " to your M-Shwari", """transferred $KSH to your M-Shwari"""),
+        KindPattern(Kind.SAVINGS, " to your M-Shwari", """transferred $KSH to your M-Shwari""", "M-Shwari"),
+        KindPattern(Kind.SAVINGS, " to KCB M-PESA account", """$KSH transferred to KCB M-PESA account""", "KCB M-PESA"),
+        KindPattern(Kind.SAVINGS_WITHDRAW, "transferred from M-Shwari", """$KSH transferred from M-Shwari account""", "M-Shwari"),
+        KindPattern(Kind.SAVINGS_WITHDRAW, "transferred from KCB M-PESA", """$KSH transferred from KCB M-PESA account""", "KCB M-PESA"),
         KindPattern(Kind.FULIZA_REPAY, "pay your outstanding Fuliza", """$KSH from your M-PESA has been used to (?:fully |partially )?pay your outstanding Fuliza"""),
     )
 
@@ -70,20 +79,20 @@ object MpesaParser {
             if (!text.contains(p.anchor, ignoreCase = true)) continue
             val m = p.pattern.matcher(text)
             if (!m.find()) continue
-            return ParseResult.Transaction(build(p.kind, m, code, text, raw))
+            return ParseResult.Transaction(build(p.kind, m, code, text, raw, p.counterparty))
         }
         return ParseResult.Unparsed(code, raw)
     }
 
-    private fun build(kind: Kind, m: Matcher, code: String, text: String, raw: String): ParsedTransaction {
+    private fun build(kind: Kind, m: Matcher, code: String, text: String, raw: String, fixedCounterparty: String?): ParsedTransaction {
         var counterparty: String
         var phone: String? = null
         var account: String? = null
 
-        when (kind) {
-            Kind.FULIZA, Kind.FULIZA_REPAY -> counterparty = "Fuliza"
-            Kind.AIRTIME -> counterparty = "Airtime"
-            Kind.SAVINGS -> counterparty = "M-Shwari"
+        when {
+            fixedCounterparty != null -> counterparty = fixedCounterparty
+            kind == Kind.FULIZA || kind == Kind.FULIZA_REPAY -> counterparty = "Fuliza"
+            kind == Kind.AIRTIME -> counterparty = "Airtime"
             else -> {
                 counterparty = m.group(2)!!.trim().trimEnd('.')
                 PHONE_TAIL.matcher(counterparty).takeIf { it.find() }?.let {

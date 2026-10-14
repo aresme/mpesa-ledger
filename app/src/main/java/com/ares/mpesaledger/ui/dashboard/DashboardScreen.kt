@@ -175,7 +175,11 @@ private fun StatGrid(t: MonthTotals) {
     Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
         Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
             StatTile("Fees", t.feeCents, feeShare.removePrefix(" · ").ifEmpty { null }, Modifier.weight(1f))
-            StatTile("Saved", t.savedCents, "to M-Shwari", Modifier.weight(1f))
+            StatTile(
+                "Saved", t.savedCents,
+                if (t.savingsWithdrawnCents > 0) "${formatCents(t.savingsWithdrawnCents)} taken out" else "to savings",
+                Modifier.weight(1f),
+            )
         }
         if (t.fulizaCents > 0 || t.fulizaRepaidCents > 0) {
             Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {

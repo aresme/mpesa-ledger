@@ -16,7 +16,8 @@ private const val SUMS = """
     COALESCE(SUM(feeCents), 0) AS feeCents,
     COALESCE(SUM(CASE WHEN kind = 'fuliza' THEN amountCents END), 0) AS fulizaCents,
     COALESCE(SUM(CASE WHEN kind = 'fuliza_repay' THEN amountCents END), 0) AS fulizaRepaidCents,
-    COALESCE(SUM(CASE WHEN kind = 'savings' THEN amountCents END), 0) AS savedCents
+    COALESCE(SUM(CASE WHEN kind = 'savings' THEN amountCents END), 0) AS savedCents,
+    COALESCE(SUM(CASE WHEN kind = 'savings_out' THEN amountCents END), 0) AS savingsWithdrawnCents
 """
 
 @Dao

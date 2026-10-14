@@ -44,7 +44,7 @@ class Categorizer(rules: List<CategoryRule>) {
             Kind.AIRTIME -> "Airtime"
             Kind.SENT -> "People"
             Kind.FULIZA, Kind.FULIZA_REPAY -> "Fuliza"
-            Kind.SAVINGS -> "Savings"
+            Kind.SAVINGS, Kind.SAVINGS_WITHDRAW -> "Savings"
             Kind.PAYBILL, Kind.TILL -> UNCATEGORIZED
         }
     }
