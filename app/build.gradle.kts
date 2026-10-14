@@ -43,6 +43,11 @@ room {
 }
 
 dependencies {
+    constraints {
+        // AGP pins androidTest to the app's runtime versions; without this the Room migration
+        // test fails with AbstractMethodError (serialization-json 1.8.1 vs core 1.7.3).
+        implementation(libs.kotlinx.serialization.core)
+    }
     coreLibraryDesugaring(libs.desugar.jdk.libs)
 
     implementation(libs.androidx.core.ktx)
@@ -67,4 +72,5 @@ dependencies {
     testImplementation(libs.org.json)
     androidTestImplementation(libs.androidx.test.junit)
     androidTestImplementation(libs.androidx.test.runner)
+    androidTestImplementation(libs.room.testing)
 }

@@ -77,8 +77,8 @@ class LedgerDatabaseTest {
 
     @Test fun monthTotalsMatchSpec() = runBlocking {
         importer.import(fixture, "test")
-        assertEquals(MonthTotals(300000, 357000, 4493, 19250, 0), totals(YearMonth.of(2026, 9)))
-        assertEquals(MonthTotals(550000, 299000, 700, 0, 20000), totals(YearMonth.of(2026, 10)))
+        assertEquals(MonthTotals(300000, 357000, 4493, 19250, 0, 0), totals(YearMonth.of(2026, 9)))
+        assertEquals(MonthTotals(550000, 299000, 700, 0, 0, 20000), totals(YearMonth.of(2026, 10)))
         assertEquals(-61493L, totals(YearMonth.of(2026, 9)).netCents)
         assertEquals(250300L, totals(YearMonth.of(2026, 10)).netCents)
     }
@@ -103,6 +103,31 @@ class LedgerDatabaseTest {
         assertEquals(1, db.unparsed().count())
         assertEquals(0, db.transactions().count())
     }
+
+    @Test fun fulizaRepaymentUsesSmsDateAndLeavesUnparsed() = runBlocking {
+        val body = "QAB1234580 Confirmed. Ksh 50.00 from your M-PESA has been used to fully pay your " +
+            "outstanding Fuliza M-PESA. Available Fuliza M-PESA limit is Ksh 500.00. Your M-PESA balance is 12.34."
+        // Simulate an older parser having stored it as unparsed.
+        db.unparsed().insert(UnparsedEntity(sha256Hex(body), body, 0))
+        val received = 1_790_000_000_000L
+        val result = importer.import(listOf(RawSms(body, smsId = 7, date = received)), "test")
+        assertEquals(1, result.inserted)
+        val row = db.transactions().get("QAB1234580", "fuliza_repay")!!
+        assertEquals(received, row.timestamp)
+        assertEquals(1234L, row.balanceCents)
+        assertEquals("none", row.direction)
+        assertEquals("Fuliza", db.transactions().effectiveCategory("QAB1234580", "fuliza_repay"))
+        assertEquals(0, db.unparsed().count())
+    }
+
+    @Test fun fulizaLoanDoesNotTakeSmsDate() = runBlocking {
+        val loan = fixture.single { "Fuliza M-Pesa amount" in it.body }.copy(date = 1L)
+        importer.import(listOf(loan), "test")
+        assertEquals(null, db.transactions().get("TJA8I9J0K1", "fuliza")!!.timestamp)
+    }
+
+    private fun sha256Hex(text: String) = java.security.MessageDigest.getInstance("SHA-256")
+        .digest(text.toByteArray()).joinToString("") { "%02x".format(it) }
 
     private suspend fun totals(month: YearMonth): MonthTotals {
         val start = month.atDay(1).atStartOfDay(MpesaParser.NAIROBI).toInstant().toEpochMilli()

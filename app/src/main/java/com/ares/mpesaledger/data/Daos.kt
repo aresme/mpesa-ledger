@@ -15,6 +15,7 @@ private const val SUMS = """
     COALESCE(SUM(CASE WHEN direction = 'out' THEN amountCents END), 0) AS outCents,
     COALESCE(SUM(feeCents), 0) AS feeCents,
     COALESCE(SUM(CASE WHEN kind = 'fuliza' THEN amountCents END), 0) AS fulizaCents,
+    COALESCE(SUM(CASE WHEN kind = 'fuliza_repay' THEN amountCents END), 0) AS fulizaRepaidCents,
     COALESCE(SUM(CASE WHEN kind = 'savings' THEN amountCents END), 0) AS savedCents
 """
 
@@ -68,6 +69,10 @@ interface UnparsedDao {
 
     @Query("SELECT COUNT(*) FROM unparsed")
     suspend fun count(): Int
+
+    /** A message that now parses (newer parser) leaves the unparsed list. */
+    @Query("DELETE FROM unparsed WHERE rawHash = :rawHash")
+    suspend fun delete(rawHash: String): Int
 }
 
 @Dao

@@ -16,7 +16,7 @@ import com.ares.mpesaledger.domain.DefaultRules
         BudgetEntity::class,
         ImportStateEntity::class,
     ],
-    version = 1,
+    version = 2,
     exportSchema = true,
 )
 abstract class AppDatabase : RoomDatabase() {
@@ -35,7 +35,7 @@ abstract class AppDatabase : RoomDatabase() {
          * against the exported JSON in app/schemas/. There is deliberately no destructive
          * fallback: a missing migration must crash in testing, not wipe someone's ledger.
          */
-        val MIGRATIONS: Array<Migration> = arrayOf()
+        val MIGRATIONS: Array<Migration> = arrayOf(MIGRATION_1_2)
 
         fun build(context: Context, name: String): AppDatabase =
             Room.databaseBuilder(context, AppDatabase::class.java, name)
@@ -47,6 +47,13 @@ abstract class AppDatabase : RoomDatabase() {
             Room.inMemoryDatabaseBuilder(context, AppDatabase::class.java)
                 .addCallback(SeedDefaultRules)
                 .build()
+    }
+}
+
+/** v2: import_state.parserVersion, so a parser upgrade can trigger a full inbox rescan. */
+val MIGRATION_1_2 = object : Migration(1, 2) {
+    override fun migrate(db: SupportSQLiteDatabase) {
+        db.execSQL("ALTER TABLE import_state ADD COLUMN parserVersion INTEGER NOT NULL DEFAULT 0")
     }
 }
 

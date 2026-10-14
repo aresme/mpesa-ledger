@@ -1,5 +1,6 @@
 package com.ares.mpesaledger.data
 
+import androidx.room.ColumnInfo
 import androidx.room.Entity
 import androidx.room.Index
 import androidx.room.PrimaryKey
@@ -80,9 +81,13 @@ data class BudgetEntity(
     val lastNotifiedMonth: Int? = null,
 )
 
-/** Single row (id = 0): the highest inbox `date` imported so far, for incremental scans. */
+/**
+ * Single row (id = 0): the highest inbox `date` imported so far, for incremental scans, and
+ * the parser version that import ran with (a newer parser forces one full rescan).
+ */
 @Entity(tableName = "import_state")
 data class ImportStateEntity(
     @PrimaryKey val id: Int = 0,
     val lastInboxDate: Long,
+    @ColumnInfo(defaultValue = "0") val parserVersion: Int = 0,
 )
