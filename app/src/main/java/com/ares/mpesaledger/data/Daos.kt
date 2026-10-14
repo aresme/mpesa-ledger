@@ -152,6 +152,10 @@ interface UnparsedDao {
     /** A message that now parses (newer parser) leaves the unparsed list. */
     @Query("DELETE FROM unparsed WHERE rawHash = :rawHash")
     suspend fun delete(rawHash: String): Int
+
+    /** Batch form; callers keep lists under SQLite's 999-variable limit (import batches are 250). */
+    @Query("DELETE FROM unparsed WHERE rawHash IN (:rawHashes)")
+    suspend fun deleteAll(rawHashes: List<String>): Int
 }
 
 @Dao

@@ -88,12 +88,21 @@ class LedgerImporter(private val db: AppDatabase) {
             var unparsed = 0
             var skipped = 0
             _progress.value = ImportProgress(0, messages.size)
+            // Only hash and clean up when there is something to clean: per-row DELETEs made a
+            // 5,000-message import ~4x slower when the unparsed table was empty anyway.
+            val cleanUnparsed = db.unparsed().count() > 0
+            var parseNs = 0L
+            var dbNs = 0L
 
             db.withTransaction {
                 messages.chunked(BATCH_SIZE).forEachIndexed { index, batch ->
                     val rows = ArrayList<TransactionEntity>(batch.size)
+                    val nowParsed = if (cleanUnparsed) ArrayList<String>() else null
                     for (sms in batch) {
-                        when (val result = MpesaParser.parse(sms.body)) {
+                        val p0 = System.nanoTime()
+                        val parsed = MpesaParser.parse(sms.body)
+                        parseNs += System.nanoTime() - p0
+                        when (val result = parsed) {
                             ParseResult.NotTransaction -> skipped++
                             is ParseResult.Unparsed -> {
                                 unparsed++
@@ -104,11 +113,14 @@ class LedgerImporter(private val db: AppDatabase) {
                                 val tx = result.tx.withFallbackTime(sms.date)
                                 rows += tx.toEntity(categorizer.categorize(tx.kind, tx.counterparty, tx.account), sms.smsId)
                                 // Parsed now (e.g. after a parser upgrade): no longer unparsed.
-                                db.unparsed().delete(sha256(tx.raw))
+                                nowParsed?.add(sha256(tx.raw))
                             }
                         }
                     }
+                    val d0 = System.nanoTime()
+                    if (!nowParsed.isNullOrEmpty()) db.unparsed().deleteAll(nowParsed)
                     val new = db.transactions().insertAll(rows).count { it != -1L }
+                    dbNs += System.nanoTime() - d0
                     inserted += new
                     duplicates += rows.size - new
                     _progress.value = ImportProgress(minOf((index + 1) * BATCH_SIZE, messages.size), messages.size)
@@ -117,6 +129,7 @@ class LedgerImporter(private val db: AppDatabase) {
             }
 
             _progress.value = null
+            AppLog.d { "import timing: parse=${parseNs / 1_000_000}ms insert=${dbNs / 1_000_000}ms (${messages.size} msgs)" }
             ImportResult(
                 source = source,
                 scanned = messages.size,
