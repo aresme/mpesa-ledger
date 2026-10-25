@@ -1,5 +1,9 @@
 # M-Pesa Ledger
 
+[![Android CI](https://github.com/aresme/mpesa-ledger/actions/workflows/android.yml/badge.svg)](https://github.com/aresme/mpesa-ledger/actions/workflows/android.yml)
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/MIT)
+[![API](https://img.shields.io/badge/API-24%2B-brightgreen.svg?style=flat)](https://android-arsenal.com/api?level=24)
+
 *Built by **AreqaTech** · version 1.0.0*
 
 Turn your M-Pesa SMS into a personal finance tracker. This offline Android app reads your M-Pesa confirmation messages and organizes them into a monthly ledger with spending categories, budget tracking, and financial insights.
@@ -182,10 +186,24 @@ Tested on Infinix X6886, Android 16, debug build:
 
 The app includes an About screen, Privacy Policy, and Help & FAQ under *Settings → Help & about*.
 
+## Contributing
+
+Contributions are welcome! Please read [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.
+
+When reporting issues with SMS parsing, always provide masked examples (replace real names, numbers, and codes).
+
+## Security
+
+Found a security vulnerability? Please see [SECURITY.md](SECURITY.md) for responsible disclosure guidelines.
+
 ## License
 
-© 2026 AreqaTech. All rights reserved.
+Licensed under the MIT License. See [LICENSE](LICENSE) for details.
 
 Bundled fonts (Inter and JetBrains Mono) are used under the SIL Open Font License 1.1. See `app/src/main/assets/licenses/`.
 
 M-Pesa Ledger is independent and not affiliated with Safaricom PLC. M-PESA, Fuliza, M-Shwari, Okoa Jahazi, and GlobalPay are trademarks of their respective owners.
+
+---
+
+Built by **AreqaTech** · [Report Bug](https://github.com/aresme/mpesa-ledger/issues/new?template=bug_report.md) · [Request Feature](https://github.com/aresme/mpesa-ledger/issues/new?template=feature_request.md)
